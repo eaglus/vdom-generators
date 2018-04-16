@@ -44,8 +44,8 @@ export class YearSelector extends Component {
   }
 
   removeDocumentListeners() {
-    document.removeEventListener("keydown", this.escapeHandler);
-    document.removeEventListener("click", this.clickOutsideHandler);
+    document.removeEventListener("keydown", this.escapeHandler, true);
+    document.removeEventListener("click", this.clickOutsideHandler, true);
   }
 
   onToggle(open) {
@@ -103,7 +103,8 @@ export class YearSelector extends Component {
 
       if (valid) {
         events = {
-          onClick: event => {
+          onMouseDown: event => {
+            event.stopPropagation();
             event.preventDefault();
             if (!pageBack && !pageForward) {
               this.onToggle(false);
@@ -165,18 +166,18 @@ export class YearSelector extends Component {
     const forwardMods = forwardEnabled ? [] : ["invalid"];
     const backClick = backEnabled
       ? {
-          onClick: () => {
-            return onSelect(Math.max(value - pageSize, min));
-          }
+        onMouseDown: () => {
+          return onSelect(Math.max(value - pageSize, min));
         }
+      }
       : {};
 
     const forwardClick = forwardEnabled
       ? {
-          onClick: () => {
-            return onSelect(Math.min(value + pageSize, max));
-          }
+        onMouseDown: () => {
+          return onSelect(Math.min(value + pageSize, max));
         }
+      }
       : {};
 
     return h("div", pClass("top-row"), [
@@ -220,21 +221,22 @@ export class YearSelector extends Component {
           "div",
           {
             ...pClass("opener", openMod),
-            onClick: event => {
+            onMouseDown: event => {
               event.preventDefault();
+              event.stopPropagation();
               this.onToggle();
             }
           },
           value
         ),
         isOpened &&
-          h(
-            "div",
-            {
-              ...pClass("popup", openMod)
-            },
-            [this.renderTopRow(), ...this.renderRows()]
-          )
+        h(
+          "div",
+          {
+            ...pClass("popup", openMod)
+          },
+          [this.renderTopRow(), ...this.renderRows()]
+        )
       ]
     );
   }

@@ -16,7 +16,8 @@ export class App extends Component {
       "div",
       pClass("root"),
       h("div", pClass("center-container"), [
-        h("div", pClass("header"), "Архив метеослужбы"),
+        //h("div", pClass("header"), "Архив метеослужбы"),
+        h("div", pClass("header"), ""),
         h("div", pClass("content"), [
           h(
             "div",

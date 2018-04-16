@@ -24,6 +24,18 @@ import {
 } from "../../utils.mjs";
 import { componentNeedsCleanup } from "../component.mjs";
 
+let contextId = 0;
+function createContextId() {
+  contextId++;
+  return contextId;
+}
+
+function getDocumentEnv() {
+  return {
+    normalizeProps: normalizeProps(false)
+  };
+}
+
 function getDomEvents(events) {
   const { mount, unmount, ...domEvents } = events || emptyObject;
   return domEvents;
@@ -79,9 +91,9 @@ function updateRootContext(rootContext, addEvents, removeEvents, queueAction) {
       const eventCnt = events && events[eventName];
       events = events
         ? {
-            ...events,
-            [eventName]: eventCnt ? eventCnt + 1 : 1
-          }
+          ...events,
+          [eventName]: eventCnt ? eventCnt + 1 : 1
+        }
         : { [eventName]: 1 };
     }
   }
@@ -97,7 +109,34 @@ function updateRootContext(rootContext, addEvents, removeEvents, queueAction) {
   }
 }
 
-function setInstanceProps(newContext, rootContext) {
+function updateContextById(context, id, rootContext, mutable) {
+  const contextById = rootContext.contextById || emptyObject;
+  const newContextById = mutable ? contextById : { ...contextById };
+  if (context) {
+    newContextById[id] = context;
+  } else {
+    delete newContextById[id];
+  }
+  if (mutable) {
+    rootContext.contextById = newContextById;
+  } else {
+    return {
+      ...rootContext,
+      contextById: newContextById
+    }
+  }
+}
+
+function cloneContextById(rootContext) {
+  return {
+    ...rootContext,
+    contextById: {
+      ...rootContext.contextById
+    }
+  };
+}
+
+function setInstanceProps(newContext, requestUpdate) {
   const { instance } = newContext;
   if (instance) {
     instance.setState = state => {
@@ -105,7 +144,7 @@ function setInstanceProps(newContext, rootContext) {
         ...instance.state,
         ...state
       };
-      rootContext.requestUpdate(newContext);
+      requestUpdate(newContext);
     };
   }
 }
@@ -181,7 +220,9 @@ function handleAppend(command, rootContext) {
         element,
         vNode: newVNode,
         fragment,
-        parentElement
+        parentElement,
+        id: createContextId(),
+        parentId: parentContext.id
       },
       rootContext: newRootContext
     };
@@ -194,6 +235,8 @@ function handleAppendComponent(command, rootContext) {
   const element = fragment || parentContext.element;
   const context = {
     vNode: newVNode,
+    id: createContextId(),
+    parentId: parentContext.id,
     instance,
     element,
     fragment,
@@ -214,7 +257,7 @@ function handleAppendComponent(command, rootContext) {
 
 function handleAppendClose(command, rootContext) {
   const { context, childContexts, insertContext } = command;
-  const { vNode, fragment, parentElement, parentContext, instance } = context;
+  const { vNode, fragment, parentElement, parentContext, instance, id, parentId } = context;
   const { isComponent } = vNode;
   const childrenNeedCleanup =
     childContexts &&
@@ -250,12 +293,16 @@ function handleAppendClose(command, rootContext) {
     element: isComponent ? parentElement : context.element,
     instance,
     vNode,
+    parentContext,
     childContexts,
     selfNeedsCleanup: needsCleanup(vNode, rootContext),
-    childrenNeedCleanup
+    childrenNeedCleanup,
+    id,
+    parentId
   };
 
-  setInstanceProps(newContext, rootContext);
+  rootContext = updateContextById(newContext, id, rootContext);
+  setInstanceProps(newContext, rootContext.requestUpdate);
 
   return {
     context: newContext,
@@ -264,7 +311,7 @@ function handleAppendClose(command, rootContext) {
 }
 
 function handleCleanup(command, rootContext) {
-  const { vNode, element } = command.context;
+  const { vNode, element, id } = command.context;
   const normalizedProps = vNode.normalizedProps(rootContext.env);
   const { events } = normalizedProps;
   const { unmount } = events || emptyObject;
@@ -273,11 +320,11 @@ function handleCleanup(command, rootContext) {
   let queueAction;
   if (vNode.isComponent) {
     if (instance) {
+      delete instance.setState;
       queueAction =
         instance.componentWillUnmount &&
         (() => {
           instance.componentWillUnmount();
-          delete instance.setState;
         });
     }
   } else {
@@ -288,6 +335,9 @@ function handleCleanup(command, rootContext) {
     }
   }
 
+  if (id) {
+    rootContext = updateContextById(null, id, rootContext);
+  }
   console.log("cleanup node", vNode);
   return {
     context: command.context,
@@ -393,6 +443,8 @@ function handleUpdateNode(command, rootContext) {
     } else {
       newRootContext = rootContext;
     }
+
+    newRootContext = updateContextById(context, context.id, newRootContext);
   }
 
   return {
@@ -409,8 +461,9 @@ function handleUpdateComponent(command, rootContext) {
     instance.componentDidUpdate &&
     (() => instance.componentDidUpdate());
 
-  setInstanceProps(context, rootContext);
+  setInstanceProps(context, rootContext.requestUpdate);
 
+  rootContext = updateContextById(context, context.id, rootContext);
   return {
     context: command.context,
     rootContext: updateRootContext(rootContext, null, null, queueAction)
@@ -436,10 +489,6 @@ function domEventHandler(event) {
     }
     target = target.parentElement;
   }
-
-  // if (handlerFound) {
-  //   event.stopPropagation();
-  // }
 }
 
 export function applyDiff(newVNode, oldContext, rootContext, dispatch) {
@@ -486,13 +535,13 @@ export function applyDiff(newVNode, oldContext, rootContext, dispatch) {
     const { element } = rootContext;
     if (eventsDiff.remove) {
       for (let eventName of eventsDiff.remove) {
-        element.removeEventListener(eventName, domEventHandler(dispatch));
+        element.removeEventListener(eventName, domEventHandler(dispatch), true);
       }
     }
 
     if (eventsDiff.add) {
       for (let eventName of Object.keys(eventsDiff.add)) {
-        element.addEventListener(eventName, domEventHandler);
+        element.addEventListener(eventName, domEventHandler, true);
       }
     }
   }
@@ -503,30 +552,28 @@ export function applyDiff(newVNode, oldContext, rootContext, dispatch) {
   };
 }
 
-// TODO: !!!!!!!!!!
-// function updateTopParent(innerContext, oldInnerContext, rootContext) {
-//   let { parentContext } = oldInnerContext;
-//   while (parentContext) {
-//     const childContexts = parentContext.childContexts.map(
-//       context => (context === oldInnerContext ? innerContext : context)
-//     );
+function updateTopParent(innerContext, oldInnerContext, rootContext) {
+  let { parentId } = oldInnerContext;
+  rootContext = cloneContextById(rootContext);
+  while (parentId) {
+    const parentContext = rootContext.contextById[parentId];
+    const childContexts = parentContext.childContexts.map(
+      context => (context === oldInnerContext ? innerContext : context)
+    );
 
-//     const newParentContext = {
-//       ...parentContext,
-//       vNode: {
-//         ...parentContext.vNode
-//       },
-//       childContexts
-//     };
-//     innerContext.parentContext = newParentContext;
-//     setInstanceProps(newParentContext, rootContext);
+    const newParentContext = {
+      ...parentContext,
+      childContexts
+    };
+    setInstanceProps(newParentContext, rootContext.requestUpdate);
+    updateContextById(newParentContext, parentId, rootContext, true);
 
-//     oldInnerContext = parentContext;
-//     innerContext = newParentContext;
-//     parentContext = oldInnerContext.parentContext;
-//   }
-//   return innerContext;
-// }
+    oldInnerContext = parentContext;
+    innerContext = newParentContext;
+    parentId = oldInnerContext.parentId;
+  }
+  return { innerContext, rootContext };
+}
 
 function execQueue(queue, dispatch) {
   if (queue) {
@@ -538,6 +585,53 @@ function execQueue(queue, dispatch) {
     }
   }
 }
+
+// export function makeUpdater(rootElement, dispatch) {
+//   let mountContext = null;
+//   let rootContext = {
+//   };
+
+//   const requestUpdate = innerContext => {
+//     const { vNode } = innerContext;
+//     const newVNode = {
+//       ...vNode
+//     };
+
+//     const oldInnerContext = innerContext;
+//     ({ context: innerContext, rootContext } = applyDiff(
+//       newVNode,
+//       innerContext,
+//       rootContext,
+//       dispatch
+//     ));
+
+//     ({ innerContext: mountContext, rootContext } = updateTopParent(
+//       innerContext,
+//       oldInnerContext,
+//       rootContext
+//     ));
+
+//     const queue = rootContext.queue;
+//     rootContext = omit(rootContext, "queue");
+//     execQueue(queue, dispatch);
+//   };
+
+//   rootContext.element = rootElement;
+//   rootContext.requestUpdate = requestUpdate;
+
+//   return newVNode => {
+//     ({ context: mountContext, rootContext } = applyDiff(
+//       newVNode,
+//       mountContext,
+//       rootContext,
+//       dispatch
+//     ));
+
+//     const queue = rootContext.queue;
+//     rootContext = omit(rootContext, "queue");
+//     execQueue(queue, dispatch);
+//   };
+// }
 
 export function makeUpdater(rootElement, dispatch) {
   let mountContext = null;
@@ -564,23 +658,6 @@ export function makeUpdater(rootElement, dispatch) {
       const queue = rootContext.queue;
       rootContext = omit(rootContext, "queue");
       execQueue(queue, dispatch);
-      // const { vNode } = innerContext;
-      // const newVNode = {
-      //   ...vNode
-      // };
-
-      // const oldInnerContext = innerContext;
-      // ({ context: innerContext, rootContext } = applyDiff(
-      //   newVNode,
-      //   innerContext,
-      //   rootContext,
-      //   dispatch
-      // ));
-      // mountContext = updateTopParent(
-      //   innerContext,
-      //   oldInnerContext,
-      //   rootContext
-      // );
     }
   };
 
@@ -595,11 +672,5 @@ export function makeUpdater(rootElement, dispatch) {
     const queue = rootContext.queue;
     rootContext = omit(rootContext, "queue");
     execQueue(queue, dispatch);
-  };
-}
-
-export function getDocumentEnv() {
-  return {
-    normalizeProps: normalizeProps(false)
   };
 }

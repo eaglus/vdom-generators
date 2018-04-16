@@ -49,9 +49,6 @@ function* append(newVNode, parentContext, isAppendRoot, insertContext) {
         childContexts,
         insertContext
       );
-      childContexts.forEach(context => {
-        context.parentContext = closeContext;
-      });
       return closeContext;
     } else {
       return openContext;
@@ -104,10 +101,6 @@ function* appendComponent(
     childContexts,
     insertContext
   );
-
-  childContexts.forEach(context => {
-    context.parentContext = closeContext;
-  });
 
   return closeContext;
 }
