@@ -52,7 +52,7 @@ export function diffProps(oldProps, newProps) {
       const oldProp = oldProps[oldKey];
       if (!newProps || !newProps.hasOwnProperty(oldKey)) {
         changesCnt++;
-        remove.push(oldProp);
+        remove.push(oldKey);
       } else {
         const newProp = newProps[oldKey];
         if (newProp !== oldProp) {

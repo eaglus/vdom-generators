@@ -16,6 +16,18 @@ import {
   emptyArray
 } from "../../utils.mjs";
 
+function normalizeRendered(rendered) {
+  if (!rendered) {
+    return [];
+  }
+  else if (Array.isArray(rendered)) {
+    return rendered;
+  } else if (typeof rendered === 'object') {
+    return [rendered];
+  } else {
+    throw new Error('Bad render value');
+  }
+}
 function* append(newVNode, parentContext, isAppendRoot, insertContext) {
   if (newVNode.isComponent) {
     return yield* appendComponent(
@@ -41,6 +53,8 @@ function* append(newVNode, parentContext, isAppendRoot, insertContext) {
         if (childVNode) {
           const childContext = yield* append(childVNode, openContext, false);
           childContexts.push(childContext);
+        } else {
+          childContexts.push(false);
         }
       }
       const closeContext = yield new AppendClose(
@@ -83,7 +97,7 @@ function* appendComponent(
     insertContext
   );
 
-  const markupArr = ensureArray(markup);
+  const markupArr = normalizeRendered(ensureArray(markup));
   const ln = markupArr.length;
   const childContexts = [];
 
@@ -92,6 +106,8 @@ function* appendComponent(
     if (childVNode) {
       const childContext = yield* append(markupArr[i], openContext);
       childContexts.push(childContext);
+    } else {
+      childContexts.push(false);
     }
   }
 
@@ -111,17 +127,17 @@ function* remove(context) {
 }
 
 function* cleanup(context) {
-  const { selfNeedsCleanup, childrenNeedCleanup } = context;
-  if (selfNeedsCleanup || childrenNeedCleanup) {
-    if (selfNeedsCleanup) {
-      yield new Cleanup(context);
-    }
-    if (childrenNeedCleanup) {
-      const { childContexts } = context;
+  if (context) {
+    yield new Cleanup(context);
+    const { childContexts } = context;
 
+    if (childContexts) {
       const ln = childContexts.length;
       for (let i = 0; i !== ln; i++) {
-        yield* cleanup(childContexts[i]);
+        const child = childContexts[i];
+        if (child) {
+          yield* cleanup(child);
+        }
       }
     }
   }
@@ -135,7 +151,8 @@ export function* diff(newVNode, context, parentContext) {
     if (!oldVNode) {
       return yield* append(newVNode, parentContext, true);
     } else if (!newVNode) {
-      return yield* remove(context);
+      yield* remove(context);
+      return false;
     } else if (oldVNode.tagOrComponent !== newVNode.tagOrComponent) {
       const insertContext = yield* remove(context);
       return yield* append(newVNode, parentContext, true, insertContext);
@@ -144,11 +161,12 @@ export function* diff(newVNode, context, parentContext) {
       let newChildren;
       if (isTextNode(vNode)) {
         if (vNode.text !== newVNode.text) {
-          yield new UpdateNode(newVNode, context);
-          return {
+          const updatedContext = {
             ...context,
             vNode: newVNode
           };
+          yield new UpdateNode(updatedContext, context);
+          return updatedContext;
         } else {
           return context;
         }
@@ -161,12 +179,12 @@ export function* diff(newVNode, context, parentContext) {
           instance.props = newVNode.props;
           instance.children = newVNode.children;
           if (shouldUpdate) {
-            newChildren = ensureArray(instance.render());
+            newChildren = normalizeRendered(instance.render());
           } else {
             newChildren = childContexts.map(ctx => ctx.vNode);
           }
         } else {
-          newChildren = ensureArray(
+          newChildren = normalizeRendered(
             newVNode.tagOrComponent(newVNode.props, newVNode.children)
           );
         }
@@ -196,9 +214,7 @@ export function* diff(newVNode, context, parentContext) {
             oldChildContext,
             context
           );
-          if (updatedChildContext) {
-            newChildContexts.push(updatedChildContext);
-          }
+          newChildContexts.push(updatedChildContext);
         }
 
         updatedContext = {
@@ -216,7 +232,7 @@ export function* diff(newVNode, context, parentContext) {
         yield new UpdateComponent(updatedContext);
         return updatedContext;
       } else {
-        yield new UpdateNode(newVNode, context);
+        yield new UpdateNode(updatedContext, context);
         return updatedContext;
       }
     }

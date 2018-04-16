@@ -39,9 +39,9 @@ export class Remove {
 }
 
 export class UpdateNode {
-  constructor(newVNode, context) {
-    this.newVNode = newVNode;
-    this.context = context;
+  constructor(newContext, oldContext) {
+    this.newContext = newContext;
+    this.oldContext = oldContext;
   }
 }
 
