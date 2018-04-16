@@ -1,0 +1,23 @@
+@import url("../yearSelector/index.css");
+
+.filter-root {
+  display: flex;
+  align-items: center;
+}
+
+.filter-root > div {
+  margin-left: 5px;
+}
+
+.filter-root > div:first-child {
+  margin-left: 0;
+}
+
+.filter-left {
+}
+
+.filter-middle {
+}
+
+.filter-right {
+}

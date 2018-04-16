@@ -1,0 +1,69 @@
+.year-selector-root {
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+.year-selector-opener {
+}
+
+.year-selector-popup {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  display: block;
+  border-style: solid;
+  border-width: thin;
+  border-color: #c3c3c3;
+  background-color: #ffffff;
+  padding: 5px;
+}
+
+.year-selector-row {
+  display: flex;
+}
+
+.year-selector-opener:hover,
+.year-selector-cell:hover,
+.year-selector-top-row-back:hover,
+.year-selector-top-row-forward:hover {
+  background-color: #eeeeee;
+  cursor: pointer;
+}
+
+.year-selector-top-row {
+  display: flex;
+  margin-bottom: 5px;
+  align-items: center;
+  font-weight: bold;
+}
+
+.year-selector-opener,
+.year-selector-cell,
+.year-selector-top-row-middle,
+.year-selector-top-row-back,
+.year-selector-top-row-forward {
+  padding: 5px;
+}
+
+.year-selector-cell.year-selector-cell_selected {
+  background-color: #0087cc;
+}
+
+.year-selector-top-row-middle {
+  flex-grow: 1;
+  text-align: center;
+}
+
+.year-selector-cell.year-selector-cell_invalid,
+.year-selector-top-row-back.year-selector-top-row-back_invalid,
+.year-selector-top-row-forward.year-selector-top-row-forward_invalid {
+  cursor: unset;
+  color: gray;
+}
+
+.year-selector-cell.year-selector-cell_invalid:hover,
+.year-selector-top-row-back.year-selector-top-row-back_invalid:hover,
+.year-selector-top-row-forward.year-selector-top-row-forward_invalid:hover {
+  background-color: unset;
+}

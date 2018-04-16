@@ -1,0 +1,27 @@
+@import url("../activeFilterSelector/index.css");
+@import url("../chartContainer/index.css");
+
+.app-root {
+  margin-top: 30px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.app-header {
+  font-size: x-large;
+  margin-bottom: 5px;
+}
+
+.app-content {
+  display: flex;
+}
+
+.app-content-right {
+  position: relative;
+  width: 800px;
+  height: 700px;
+  margin-left: 5px;
+  display: flex;
+  flex-direction: column;
+}
