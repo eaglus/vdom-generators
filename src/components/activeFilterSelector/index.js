@@ -1,7 +1,7 @@
-import { h } from "../../lib/vdom/h.mjs";
-import { bemClassProps } from "../../lib/utils.mjs";
-import { ACTIVE_FILTER } from "../../reducers/filters.mjs";
-import { setActiveFilterType } from "../../actions/index.mjs";
+import { h } from "../../lib/vdom/h.js";
+import { bemClassProps } from "../../lib/utils.js";
+import { ACTIVE_FILTER } from "../../reducers/filters.js";
+import { setActiveFilterType } from "../../actions/index.js";
 
 const pClass = bemClassProps("active-filter-selector");
 

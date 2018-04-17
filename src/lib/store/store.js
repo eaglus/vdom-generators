@@ -1,4 +1,4 @@
-import { initAction } from "./actions.mjs";
+import { initAction } from "./actions.js";
 
 export function combineReducers(reducers) {
   return (action, state) => {

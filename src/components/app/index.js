@@ -1,9 +1,9 @@
-import { h } from "../../lib/vdom/h.mjs";
-import { bemClassProps } from "../../lib/utils.mjs";
-import { Component } from "../../lib/vdom/component.mjs";
+import { h } from "../../lib/vdom/h.js";
+import { bemClassProps } from "../../lib/utils.js";
+import { Component } from "../../lib/vdom/component.js";
 
-import { ActiveFilterSelector } from "../activeFilterSelector/index.mjs";
-import { ChartContainer } from "../chartContainer/index.mjs";
+import { ActiveFilterSelector } from "../activeFilterSelector/index.js";
+import { ChartContainer } from "../chartContainer/index.js";
 
 const pClass = bemClassProps("app");
 

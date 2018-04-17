@@ -1,6 +1,6 @@
-import { Append, AppendClose, AppendComponent } from "../diff/commands.mjs";
-import { diff } from "../diff/diff.mjs";
-import { attributesAsText, normalizeProps, isTextNode } from "../utils.mjs";
+import { Append, AppendClose, AppendComponent } from "../diff/commands.js";
+import { diff } from "../diff/diff.js";
+import { attributesAsText, normalizeProps, isTextNode } from "../utils.js";
 
 function getIndentString(indentLevel) {
   let result = "";

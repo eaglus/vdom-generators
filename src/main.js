@@ -1,9 +1,9 @@
-import { h } from "./lib/vdom/h.mjs";
-import { makeStore, combineReducers } from "./lib/store/store.mjs";
-import { initAction } from "./lib/store/actions.mjs";
-import { makeUpdater } from "./lib/vdom/interpreters/documentInterpeter.mjs";
-import { filterReducer } from "./reducers/filters.mjs";
-import { App } from "./components/app/index.mjs";
+import { h } from "./lib/vdom/h.js";
+import { makeStore, combineReducers } from "./lib/store/store.js";
+import { initAction } from "./lib/store/actions.js";
+import { makeUpdater } from "./lib/vdom/interpreters/documentInterpeter.js";
+import { filterReducer } from "./reducers/filters.js";
+import { App } from "./components/app/index.js";
 
 const reducer = combineReducers({
   filter: filterReducer

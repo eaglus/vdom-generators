@@ -2,7 +2,7 @@ import {
   setActiveFilterType,
   setActiveFilterFrom,
   setActiveFilterTo
-} from "../actions/index.mjs";
+} from "../actions/index.js";
 
 const MIN_YEAR = 1881;
 const MAX_YEAR = 2006;

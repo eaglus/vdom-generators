@@ -6,15 +6,15 @@ import {
   Remove,
   UpdateNode,
   UpdateComponent
-} from "./commands.mjs";
+} from "./commands.js";
 
-import { isStatefulComponent } from "../component.mjs";
+import { isStatefulComponent } from "../component.js";
 import {
   isTextNode,
   ensureArray,
   emptyObject,
   emptyArray
-} from "../../utils.mjs";
+} from "../../utils.js";
 
 function normalizeRendered(rendered) {
   if (!rendered) {

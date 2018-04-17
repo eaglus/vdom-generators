@@ -1,12 +1,12 @@
-import { h } from "../../lib/vdom/h.mjs";
-import { Component } from "../../lib/vdom/component.mjs";
-import { bemClassProps } from "../../lib/utils.mjs";
+import { h } from "../../lib/vdom/h.js";
+import { Component } from "../../lib/vdom/component.js";
+import { bemClassProps } from "../../lib/utils.js";
 
 import {
   setActiveFilterFrom,
   setActiveFilterTo
-} from "../../actions/index.mjs";
-import { YearSelector } from "../yearSelector/index.mjs";
+} from "../../actions/index.js";
+import { YearSelector } from "../yearSelector/index.js";
 
 const pClass = bemClassProps("filter");
 

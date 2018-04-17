@@ -1,6 +1,6 @@
-import { h } from "../../lib/vdom/h.mjs";
-import { bemClassProps } from "../../lib/utils.mjs";
-import { Component } from "../../lib/vdom/component.mjs";
+import { h } from "../../lib/vdom/h.js";
+import { bemClassProps } from "../../lib/utils.js";
+import { Component } from "../../lib/vdom/component.js";
 
 const pClass = bemClassProps("chart");
 

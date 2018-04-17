@@ -1,7 +1,7 @@
-import { h } from "../../lib/vdom/h.mjs";
-import { bemClassProps } from "../../lib/utils.mjs";
-import { Chart } from "../chart/index.mjs";
-import { Filter } from "../filter/index.mjs";
+import { h } from "../../lib/vdom/h.js";
+import { bemClassProps } from "../../lib/utils.js";
+import { Chart } from "../chart/index.js";
+import { Filter } from "../filter/index.js";
 
 const pClass = bemClassProps("chart-container");
 

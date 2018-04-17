@@ -6,8 +6,8 @@ import {
   Remove,
   UpdateNode,
   UpdateComponent
-} from "../diff/commands.mjs";
-import { diff } from "../diff/diff.mjs";
+} from "../diff/commands.js";
+import { diff } from "../diff/diff.js";
 import {
   normalizeProps,
   isEmptyObject,
@@ -22,7 +22,7 @@ import {
   setProps,
   removeProps,
   assert
-} from "../../utils.mjs";
+} from "../../utils.js";
 
 let contextId = 0;
 function createContextId() {

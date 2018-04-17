@@ -1,14 +1,14 @@
-import { makeH } from "./lib/vdom/h.mjs";
-import { Component } from "./lib/vdom/component.mjs";
+import { makeH } from "./lib/vdom/h.js";
+import { Component } from "./lib/vdom/component.js";
 import {
   buildText,
   getTextEnv
-} from "./lib/vdom/interpreters/textInterpreter.mjs";
+} from "./lib/vdom/interpreters/textInterpreter.js";
 
 import {
   applyDiff,
   getDocumentEnv
-} from "./lib/vdom/interpreters/documentInterpeter.mjs";
+} from "./lib/vdom/interpreters/documentInterpeter.js";
 
 function getTestDoms(env) {
   const h = makeH(env);
