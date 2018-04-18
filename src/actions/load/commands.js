@@ -11,6 +11,12 @@ export class FindNextChunk {
   }
 }
 
+export class FindClose {
+  constructor(context) {
+    this.context = context;
+  }
+}
+
 export class LoadChunks {
   constructor(dateFrom, dateTo, collection) {
     this.dateFrom = dateFrom;

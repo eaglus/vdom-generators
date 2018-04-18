@@ -48,11 +48,19 @@ class IndexedDBLoader {
     return this.getDb().then(db => {
       const tx = db.transaction(`${collection} read`, "readonly");
       const store = tx.objectStore(collection);
-      const range = IDBKeyRange.bound(dateFrom, dateTo);
+      const range = IDBKeyRange.lowerBound(dateFrom);
       const index = store.index('date');
       return index.openCursor(range);
     }).then(cursor => {
+      const data = [];
+      let dateToFound = dateFrom;
+      if (cursor) {
+        ///loadData ...
+      }
 
+      if (dateToFound !== dateTo) {
+
+      }
     });
   }
 }
