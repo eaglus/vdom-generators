@@ -59,6 +59,10 @@ class IndexedDBLoader {
 
 const loader = new IndexedDBLoader();
 
+export function loaderFactory() {
+
+}
+
 
 export function loadRange() {
 

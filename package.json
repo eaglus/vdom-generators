@@ -26,6 +26,7 @@
     "prettier": "^1.11.1",
     "pretty-quick": "^1.4.1",
     "regenerator-runtime": "^0.11.1",
-    "serve": "^6.5.3"
+    "serve": "^6.5.3",
+    "shelving-mock-indexeddb": "^1.0.7"
   }
 }

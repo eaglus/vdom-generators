@@ -1,6 +1,5 @@
 import { dataLoader } from '../dataLoader.js';
 import { FindStartChunk, FindNextChunk, LoadChunks } from '../commands';
-import { commandsEqual } from '../../../lib/utils.js';
 
 
 function testCommands(commands, commandsTable, checkResult) {

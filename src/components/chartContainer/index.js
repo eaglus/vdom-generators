@@ -1,5 +1,5 @@
 import { h } from "../../lib/vdom/h.js";
-import { bemClassProps } from "../../lib/utils.js";
+import { bemClassProps } from "../../lib/utils/vdom.js";
 import { Chart } from "../chart/index.js";
 import { Filter } from "../filter/index.js";
 
