@@ -160,3 +160,25 @@ export const bemClassProps = block => (element, modifier) => {
     class: bemClass(block)(element, modifier)
   };
 };
+
+export function commandesEqual(cmd1, cmd2) {
+  const classesEqual = cmd1.constructor === cmd2.constructor;
+
+  if (classesEqual) {
+    for (let key of Object.keys(cmd1)) {
+      if (cmd1[key] !== cmd2[key]) {
+        return false;
+      }
+    }
+
+    for (let key of Object.keys(cmd2)) {
+      if (cmd1[key] !== cmd2[key]) {
+        return false;
+      }
+    }
+
+    return true;
+  } else {
+    return false;
+  }
+}
