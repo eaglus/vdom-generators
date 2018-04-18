@@ -6,23 +6,22 @@ export function* dataLoader(dateFrom, dateTo, collection) {
   const data = [];
   let dataEnd = dateFrom - 1;
 
-  console.log('start chunk', chunk);
-  while (chunk && chunk[0].date <= dateFrom && dataEnd < dateTo) {
-    for (let i in chunk) {
-      const value = chunk[i];
-      const { date } = value;
-      if (date > dateTo) {
-        break;
-      } else if (date >= dateFrom) {
-        data.push(value);
-        dataEnd = date;
+  if (chunk && chunk[0].date <= dateFrom) {
+    while (chunk && dataEnd < dateTo) {
+      for (let i in chunk) {
+        const value = chunk[i];
+        const { date } = value;
+        if (date > dateTo) {
+          break;
+        } else if (date >= dateFrom) {
+          data.push(value);
+          dataEnd = date;
+        }
       }
-    }
 
-    console.log('ZZZ', data);
-    if (dataEnd < dateTo) {
-      ({ chunk, context } = yield new FindNextChunk(context));
-      console.log(data, chunk, chunk && chunk[0].date <= dateFrom && dataEnd < dateTo);
+      if (dataEnd < dateTo) {
+        ({ chunk, context } = yield new FindNextChunk(context));
+      }
     }
   }
 
