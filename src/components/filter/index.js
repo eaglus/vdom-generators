@@ -18,9 +18,7 @@ export class Filter extends Component {
     return h("div", pClass("root"), [
       h(
         "div",
-        {
-          ...pClass("left")
-        },
+        pClass("left"),
         h(YearSelector, {
           value: from,
           min: minYear,
@@ -30,16 +28,12 @@ export class Filter extends Component {
       ),
       h(
         "div",
-        {
-          ...pClass("middle")
-        },
+         pClass("middle"),
         " - "
       ),
       h(
         "div",
-        {
-          ...pClass("right")
-        },
+        pClass("right"),
         h(YearSelector, {
           value: to,
           min: minYear,

@@ -64,6 +64,10 @@ export class YearSelector extends Component {
     }
   }
 
+  componentWillUmount() {
+    this.removeDocumentListeners();
+  }
+
   clickOutsideHandler(event) {
     if (this.rootElement) {
       let target = event.target;
@@ -83,12 +87,8 @@ export class YearSelector extends Component {
     }
   }
 
-  updateElement({ rootElement }) {
+  updateRootElement(rootElement) {
     this.rootElement = rootElement;
-  }
-
-  componentWillUmount() {
-    this.removeDocumentListeners();
   }
 
   renderRow(range, isFirst, isLast) {
@@ -117,6 +117,13 @@ export class YearSelector extends Component {
           mods.push("selected");
         }
       } else {
+        events = {
+          onMouseDown: event => {
+            event.stopPropagation();
+            event.preventDefault();
+          }
+        };
+
         mods.push("invalid");
       }
 
@@ -166,7 +173,7 @@ export class YearSelector extends Component {
     const forwardMods = forwardEnabled ? [] : ["invalid"];
     const backClick = backEnabled
       ? {
-        onMouseDown: () => {
+        onMouseDown: event => {
           return onSelect(Math.max(value - pageSize, min));
         }
       }
@@ -213,8 +220,8 @@ export class YearSelector extends Component {
       "div",
       {
         ...pClass("root"),
-        onMount: element => this.updateElement({ rootElement: element }),
-        onUnmount: element => this.updateElement({ rootElement: null })
+        onMount: element => this.updateRootElement(element),
+        onUnmount: element => this.updateRootElement(rootElement)
       },
       [
         h(
@@ -232,9 +239,7 @@ export class YearSelector extends Component {
         isOpened &&
         h(
           "div",
-          {
-            ...pClass("popup", openMod)
-          },
+          pClass("popup", openMod),
           [this.renderTopRow(), ...this.renderRows()]
         )
       ]
