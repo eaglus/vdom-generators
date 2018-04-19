@@ -1,4 +1,4 @@
-import { emptyObject, ensureArray } from "../utils.js";
+import { emptyObject, ensureArray } from "../utils/index.js";
 
 const emptyNormProps = env => emptyObject;
 

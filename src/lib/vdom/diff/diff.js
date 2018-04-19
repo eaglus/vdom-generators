@@ -9,12 +9,8 @@ import {
 } from "./commands.js";
 
 import { isStatefulComponent } from "../component.js";
-import {
-  isTextNode,
-  ensureArray,
-  emptyObject,
-  emptyArray
-} from "../../utils.js";
+import { ensureArray, emptyObject, emptyArray } from "../../utils/index.js";
+import { isTextNode } from "../../utils/vdom.js";
 
 function normalizeRendered(rendered) {
   if (!rendered) {

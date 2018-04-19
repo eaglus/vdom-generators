@@ -1,7 +1,8 @@
 export class FindStartChunk { //находим пачку с _верхней_ границе больше, чем date
-  constructor(date, collection) {
+  constructor(date, collection, context) {
     this.date = date;
     this.collection = collection;
+    this.context = context;
   }
 }
 

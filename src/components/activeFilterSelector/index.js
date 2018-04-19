@@ -1,5 +1,5 @@
 import { h } from "../../lib/vdom/h.js";
-import { bemClassProps } from "../../lib/utils.js";
+import { bemClassProps } from "../../lib/utils/vdom.js";
 import { ACTIVE_FILTER } from "../../reducers/filters.js";
 import { setActiveFilterType } from "../../actions/index.js";
 

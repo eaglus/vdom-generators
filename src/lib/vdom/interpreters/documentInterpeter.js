@@ -9,20 +9,15 @@ import {
 } from "../diff/commands.js";
 import { diff } from "../diff/diff.js";
 import {
-  normalizeProps,
   isEmptyObject,
   assertNotImplemented,
   diffProps,
   emptyObject,
   emptyArray,
-  isTextNode,
   omit,
-  setAttributes,
-  removeAttributes,
-  setProps,
-  removeProps,
   assert
-} from "../../utils.js";
+} from "../../utils/index.js";
+import { normalizeProps, isTextNode, setAttributes, removeAttributes, setProps, removeProps } from "../../utils/vdom.js";
 
 let contextId = 0;
 function createContextId() {
