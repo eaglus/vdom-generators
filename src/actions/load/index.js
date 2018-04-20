@@ -1,3 +1,5 @@
+import { FindStartChunk } from './commands';
+
 export class CanceledException extends Error {
 }
 
@@ -48,27 +50,23 @@ class IndexedDBLoader {
     return this.getDb().then(db => {
       const tx = db.transaction(`${collection} read`, "readonly");
       const store = tx.objectStore(collection);
-      const range = IDBKeyRange.lowerBound(dateFrom);
+      const range = IDBKeyRange.bound(dateFrom, dateTo);
       const index = store.index('date');
       return index.openCursor(range);
     }).then(cursor => {
-      const data = [];
-      let dateToFound = dateFrom;
-      if (cursor) {
-        ///loadData ...
-      }
 
-      if (dateToFound !== dateTo) {
-
-      }
     });
   }
 }
 
 const loader = new IndexedDBLoader();
 
-export function loaderFactory() {
-
+export function createCommandHandler(env) {
+  const IndexedDB = env.IndexedDB;
+  let dbPromise = null;
+  return (command) => {
+    if 
+  }
 }
 
 

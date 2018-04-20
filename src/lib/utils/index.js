@@ -15,10 +15,6 @@ export function ensureArray(v) {
   return Array.isArray(v) ? v : [v];
 }
 
-export function arePropsEqual(vNode1, vNode2) {
-  return vNode1 === vNode2;
-}
-
 export function isEmptyObject(obj) {
   return !obj || Object.keys(obj).length === 0;
 }
@@ -70,5 +66,6 @@ export function diffProps(oldProps, newProps) {
   }
 }
 
-
-
+export function compose(fn1, fn2) {
+  return v => fn1(fn2(v));
+}

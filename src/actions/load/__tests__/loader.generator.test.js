@@ -1,6 +1,10 @@
-import { dataLoader } from '../dataLoader.js';
-import { FindStartChunk, FindNextChunk, LoadChunks } from '../commands';
-
+import { dataLoader } from "../loadGenerator";
+import {
+  FindStartChunk,
+  FindNextChunk,
+  LoadChunks,
+  FindClose
+} from "../commands";
 
 function testCommands(commands, commandsTable, checkResult) {
   let idx = 0;
@@ -27,7 +31,7 @@ function makeChunk(start, count = 1) {
   return result;
 }
 
-describe('loader commands test', () => {
+describe("loader commands test", () => {
   const dateFrom = 101;
   const dateTo = 207;
   const dateCnt = dateTo - dateFrom + 1;
@@ -36,52 +40,57 @@ describe('loader commands test', () => {
   const startIdx = dateFrom - chunks[0].date;
   const expectResult = chunks.slice(startIdx, startIdx + dateCnt);
 
-  it('test for empty', () => {
+  it("test for empty", () => {
     const commandTable = [
-      [new FindStartChunk(dateFrom, ''), {}], //no chunks at start
-      [new LoadChunks(dateFrom, dateTo, ''), {}],
-      [new FindStartChunk(dateFrom, ''), { chunk: makeChunk(100) }],
+      [new FindStartChunk(dateFrom, ""), {}], //no chunks at start
+      [new FindClose()],
+      [new LoadChunks(dateFrom, dateTo, ""), {}],
+      [new FindStartChunk(dateFrom, ""), { chunk: makeChunk(100) }],
       [new FindNextChunk(), { chunk: makeChunk(100 + chunkLength) }],
-      [new FindNextChunk(), { chunk: makeChunk(100 + chunkLength * 2) }],
+      [new FindNextChunk(), { chunk: makeChunk(100 + chunkLength * 2) }]
     ];
 
-    testCommands(dataLoader(dateFrom, dateTo, ''), commandTable, expectResult);
+    testCommands(dataLoader(dateFrom, dateTo, ""), commandTable, expectResult);
   });
 
-  it('test for load left', () => {
+  it("test for load left", () => {
     const commandTable = [
-      [new FindStartChunk(dateFrom, ''), { chunk: makeChunk(150) }],
-      [new LoadChunks(dateFrom, 149, ''), {}],
-      [new FindStartChunk(dateFrom, ''), { chunk: makeChunk(100) }],
+      [new FindStartChunk(dateFrom, ""), { chunk: makeChunk(150) }],
+      [new LoadChunks(dateFrom, 149, ""), {}],
+      [new FindStartChunk(dateFrom, ""), { chunk: makeChunk(100) }],
       [new FindNextChunk(), { chunk: makeChunk(100 + chunkLength) }],
-      [new FindNextChunk(), { chunk: makeChunk(100 + chunkLength * 2) }],
+      [new FindNextChunk(), { chunk: makeChunk(100 + chunkLength * 2) }]
     ];
 
-    testCommands(dataLoader(dateFrom, dateTo, ''), commandTable, expectResult);
+    testCommands(dataLoader(dateFrom, dateTo, ""), commandTable, expectResult);
   });
 
-  it('test for load right', () => {
+  it("test for load right", () => {
     const testFromEmptyState = [
-      [new FindStartChunk(dateFrom, ''), { chunk: makeChunk(100) }],
+      [new FindStartChunk(dateFrom, ""), { chunk: makeChunk(100) }],
       [new FindNextChunk(), {}],
-      [new LoadChunks(150, dateTo, ''), {}],
-      [new FindStartChunk(150, ''), { chunk: makeChunk(150) }],
-      [new FindNextChunk(), { chunk: makeChunk(200) }],
+      [new LoadChunks(150, dateTo, ""), {}],
+      [new FindStartChunk(150, ""), { chunk: makeChunk(150) }],
+      [new FindNextChunk(), { chunk: makeChunk(200) }]
     ];
 
     let chunks = makeChunk(100, 3);
     const startIdx = dateFrom - chunks[0].date;
     const expectResult = chunks.slice(startIdx, startIdx + dateCnt);
-    testCommands(dataLoader(dateFrom, dateTo, ''), testFromEmptyState, expectResult);
+    testCommands(
+      dataLoader(dateFrom, dateTo, ""),
+      testFromEmptyState,
+      expectResult
+    );
   });
 
-  it('test for all loaded', () => {
+  it("test for all loaded", () => {
     const commandTable = [
-      [new FindStartChunk(dateFrom, ''), { chunk: makeChunk(100) }],
+      [new FindStartChunk(dateFrom, ""), { chunk: makeChunk(100) }],
       [new FindNextChunk(), { chunk: makeChunk(150) }],
-      [new FindNextChunk(), { chunk: makeChunk(200) }],
+      [new FindNextChunk(), { chunk: makeChunk(200) }]
     ];
 
-    testCommands(dataLoader(dateFrom, dateTo, ''), commandTable, expectResult);
+    testCommands(dataLoader(dateFrom, dateTo, ""), commandTable, expectResult);
   });
 });
