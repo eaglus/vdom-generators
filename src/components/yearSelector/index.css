@@ -12,11 +12,10 @@
   top: 100%;
   left: 0;
   display: block;
-  border-style: solid;
-  border-width: thin;
-  border-color: #c3c3c3;
+  border: thin solid #c3c3c3;
   background-color: #ffffff;
   padding: 5px;
+  z-index: 1;
 }
 
 .year-selector-row {

@@ -1,7 +1,7 @@
 import { h } from "../../lib/vdom/h.js";
 import { bemClassProps } from "../../lib/utils/vdom.js";
 import { ACTIVE_FILTER } from "../../reducers/filters.js";
-import { setActiveFilterType } from "../../actions/index.js";
+import { loadForFilterType } from "../../actions/index.js";
 
 const pClass = bemClassProps("active-filter-selector");
 
@@ -18,7 +18,7 @@ export function ActiveFilterSelector(props) {
       "div",
       {
         ...pClass("button", temperatureButtonMod),
-        onClick: setActiveFilterType(ACTIVE_FILTER.TEMPERATURE)
+        onClick: () => loadForFilterType(ACTIVE_FILTER.TEMPERATURE)
       },
       "Температура"
     ),
@@ -26,7 +26,7 @@ export function ActiveFilterSelector(props) {
       "div",
       {
         ...pClass("button", precipitationButtonMod),
-        onClick: setActiveFilterType(ACTIVE_FILTER.PRECIPITATION)
+        onClick: () => loadForFilterType(ACTIVE_FILTER.PRECIPITATION)
       },
       "Осадки"
     )

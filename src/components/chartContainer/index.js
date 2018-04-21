@@ -6,7 +6,7 @@ import { Filter } from "../filter/index.js";
 const pClass = bemClassProps("chart-container");
 
 export function ChartContainer(props) {
-  const { activeFilter, dataFiltered, minYear, maxYear } = props;
+  const { activeFilter, chartData, minYear, maxYear } = props;
 
   return [
     h(
@@ -14,6 +14,6 @@ export function ChartContainer(props) {
       pClass("filter-row"),
       h(Filter, { ...activeFilter, minYear, maxYear })
     ),
-    h("div", pClass("chart"), h(Chart, { dataFiltered }))
+    h("div", pClass("chart"), h(Chart, { ...chartData }))
   ];
 }

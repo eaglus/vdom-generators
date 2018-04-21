@@ -9,7 +9,7 @@ const pClass = bemClassProps("app");
 
 export class App extends Component {
   render() {
-    const { filter, dataFiltered } = this.props;
+    const { filter, chartData } = this.props;
     const { activeFilterType, minYear, maxYear } = filter;
     const activeFilter = filter[activeFilterType];
     return h(
@@ -27,7 +27,7 @@ export class App extends Component {
           h(
             "div",
             pClass("content-right"),
-            h(ChartContainer, { activeFilter, minYear, maxYear, dataFiltered })
+            h(ChartContainer, { activeFilter, minYear, maxYear, chartData })
           )
         ])
       ])

@@ -1,5 +1,6 @@
 @import url("../activeFilterSelector/index.css");
 @import url("../chartContainer/index.css");
+@import url("../loader/index.css");
 
 .app-root {
   margin-top: 30px;

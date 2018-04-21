@@ -1,6 +1,6 @@
-import { createCommandHandler } from "./loadHandlers";
-import { dataLoader } from "./loadGenerator";
-import { runCallbackGenerator } from "../../lib/utils/generator";
+import { createCommandHandler } from "./loadHandlers.js";
+import { dataLoader } from "./loadGenerator.js";
+import { runCallbackGenerator } from "../../lib/utils/generator.js";
 
 export function createLoader(env) {
   const handler = createCommandHandler(env);

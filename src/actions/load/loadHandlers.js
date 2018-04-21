@@ -3,7 +3,7 @@ import {
   FindNextChunk,
   FindClose,
   LoadChunks
-} from "./commands";
+} from "./commands.js";
 import { assert } from "../../lib/utils/index.js";
 import { openIndexedDB } from "../../lib/utils/indexedDB.js";
 import { alignToMonthStart, alignToMonthEnd } from "../../lib/utils/date.js";
@@ -13,7 +13,7 @@ export function splitToMonths(data) {
   let monthData;
   let currentYear;
   let currentMonth;
-  let prevDate = 0;
+  let prevDate = Number.NEGATIVE_INFINITY;
 
   data.forEach(value => {
     const date = new Date(value.date);
@@ -83,7 +83,7 @@ export function createCommandHandler(env) {
             const key = cursor && cursor.key;
             const value = cursor && cursor.value;
             callback({
-              chunk: key !== undefined ? value.data : undefined,
+              chunk: key != null ? value.data : undefined,
               context: {
                 db,
                 cursor,
@@ -101,10 +101,8 @@ export function createCommandHandler(env) {
       cursor.continue();
       request.onsuccess = () => {
         const key = cursor.key;
-        const value = key ? cursor.value : undefined;
-        const chunk = value && value.data;
         callback({
-          chunk,
+          chunk: key != null ? cursor.value.data : undefined,
           context
         });
       };
@@ -131,10 +129,18 @@ export function createCommandHandler(env) {
           };
           tx.onerror = errorCallback;
 
-          const store = tx.objectStore(collection);
-          const splitted = splitToMonths(data);
+          try {
+            const store = tx.objectStore(collection);
+            const splitted = splitToMonths(data);
 
-          splitted.forEach(monthData => store.put(monthData));
+            splitted.forEach(monthData => store.put(monthData));
+          } catch (e) {
+            tx.oncomplete = null;
+            tx.onerror = null;
+            tx.abort();
+            db.close();
+            errorCallback(e);
+          }
         }, errorCallback);
       }, errorCallback);
     }

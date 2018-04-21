@@ -173,18 +173,18 @@ export class YearSelector extends Component {
     const forwardMods = forwardEnabled ? [] : ["invalid"];
     const backClick = backEnabled
       ? {
-        onMouseDown: event => {
-          return onSelect(Math.max(value - pageSize, min));
+          onMouseDown: event => {
+            return onSelect(Math.max(value - pageSize, min));
+          }
         }
-      }
       : {};
 
     const forwardClick = forwardEnabled
       ? {
-        onMouseDown: () => {
-          return onSelect(Math.min(value + pageSize, max));
+          onMouseDown: () => {
+            return onSelect(Math.min(value + pageSize, max));
+          }
         }
-      }
       : {};
 
     return h("div", pClass("top-row"), [
@@ -221,7 +221,7 @@ export class YearSelector extends Component {
       {
         ...pClass("root"),
         onMount: element => this.updateRootElement(element),
-        onUnmount: element => this.updateRootElement(rootElement)
+        onUnmount: () => this.updateRootElement(null)
       },
       [
         h(
@@ -237,11 +237,10 @@ export class YearSelector extends Component {
           value
         ),
         isOpened &&
-        h(
-          "div",
-          pClass("popup", openMod),
-          [this.renderTopRow(), ...this.renderRows()]
-        )
+          h("div", pClass("popup", openMod), [
+            this.renderTopRow(),
+            ...this.renderRows()
+          ])
       ]
     );
   }

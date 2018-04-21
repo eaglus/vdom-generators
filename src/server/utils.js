@@ -1,5 +1,3 @@
-import { assert } from "../lib/utils/index.js";
-
 const TemperatureData = require("../../temperature.json");
 const PrecipitationData = require("../../precipitation.json");
 
@@ -11,7 +9,13 @@ const collections = {
   precipitation
 };
 
-export function getRange(dateFrom, dateTo, collection) {
+function assert(condition, message) {
+  if (!condition) {
+    throw new Error(message);
+  }
+}
+
+function getRange(dateFrom, dateTo, collection) {
   const table = collections[collection];
 
   const indexFrom = table.findIndex(item => item.date === dateFrom);
@@ -40,3 +44,5 @@ function convertData(data) {
 
   return res;
 }
+
+module.exports.getRange = getRange;

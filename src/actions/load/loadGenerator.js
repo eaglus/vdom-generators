@@ -4,7 +4,7 @@ import {
   FindNextChunk,
   FindClose,
   LoadChunks
-} from "./commands";
+} from "./commands.js";
 
 export function* dataLoader(dateFrom, dateTo, collection, startContext) {
   let { chunk, context } = yield new FindStartChunk(

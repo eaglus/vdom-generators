@@ -2,10 +2,7 @@ import { h } from "../../lib/vdom/h.js";
 import { Component } from "../../lib/vdom/component.js";
 import { bemClassProps } from "../../lib/utils/vdom.js";
 
-import {
-  setActiveFilterFrom,
-  setActiveFilterTo
-} from "../../actions/index.js";
+import { loadForFilterFrom, loadForFilterTo } from "../../actions/index.js";
 import { YearSelector } from "../yearSelector/index.js";
 
 const pClass = bemClassProps("filter");
@@ -23,14 +20,10 @@ export class Filter extends Component {
           value: from,
           min: minYear,
           max: maxYear,
-          onSelect: setActiveFilterFrom
+          onSelect: loadForFilterFrom
         })
       ),
-      h(
-        "div",
-         pClass("middle"),
-        " - "
-      ),
+      h("div", pClass("middle"), " - "),
       h(
         "div",
         pClass("right"),
@@ -38,7 +31,7 @@ export class Filter extends Component {
           value: to,
           min: minYear,
           max: maxYear,
-          onSelect: setActiveFilterTo
+          onSelect: loadForFilterTo
         })
       )
     ]);

@@ -1,4 +1,4 @@
-import { compose } from "./index";
+import { compose } from "./index.js";
 
 export function getResult(event) {
   return event.target.result;
