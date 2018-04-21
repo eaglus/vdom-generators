@@ -40,57 +40,122 @@ describe("loader commands test", () => {
   const startIdx = dateFrom - chunks[0].date;
   const expectResult = chunks.slice(startIdx, startIdx + dateCnt);
 
+  const openedContext = { db: 1 };
+  const loadedContext = { db: 2 };
   it("test for empty", () => {
     const commandTable = [
-      [new FindStartChunk(dateFrom, ""), {}], //no chunks at start
-      [new FindClose()],
-      [new LoadChunks(dateFrom, dateTo, ""), {}],
-      [new FindStartChunk(dateFrom, ""), { chunk: makeChunk(100) }],
-      [new FindNextChunk(), { chunk: makeChunk(100 + chunkLength) }],
-      [new FindNextChunk(), { chunk: makeChunk(100 + chunkLength * 2) }]
+      [new FindStartChunk(dateFrom, ""), { context: openedContext }], //no chunks at start
+      [new FindClose(openedContext)],
+      [new LoadChunks(dateFrom, dateTo, ""), loadedContext],
+      [
+        new FindStartChunk(dateFrom, "", loadedContext),
+        { chunk: makeChunk(100), context: loadedContext }
+      ],
+      [
+        new FindNextChunk(loadedContext),
+        { chunk: makeChunk(100 + chunkLength), context: loadedContext }
+      ],
+      [
+        new FindNextChunk(loadedContext),
+        { chunk: makeChunk(100 + chunkLength * 2), context: loadedContext }
+      ],
+      [new FindClose(loadedContext)]
     ];
 
     testCommands(dataLoader(dateFrom, dateTo, ""), commandTable, expectResult);
   });
 
   it("test for load left", () => {
+    const startContext = { db: "nothing" };
+    const openedContext = { db: 1 };
+    const loadedContext = { db: 2 };
     const commandTable = [
-      [new FindStartChunk(dateFrom, ""), { chunk: makeChunk(150) }],
-      [new LoadChunks(dateFrom, 149, ""), {}],
-      [new FindStartChunk(dateFrom, ""), { chunk: makeChunk(100) }],
-      [new FindNextChunk(), { chunk: makeChunk(100 + chunkLength) }],
-      [new FindNextChunk(), { chunk: makeChunk(100 + chunkLength * 2) }]
+      [
+        new FindStartChunk(dateFrom, "", startContext),
+        { chunk: makeChunk(150), context: openedContext }
+      ],
+      [new FindClose(openedContext)],
+      [new LoadChunks(dateFrom, 149, ""), loadedContext],
+      [
+        new FindStartChunk(dateFrom, "", loadedContext),
+        { chunk: makeChunk(100), context: loadedContext }
+      ],
+      [
+        new FindNextChunk(loadedContext),
+        { chunk: makeChunk(100 + chunkLength), context: loadedContext }
+      ],
+      [
+        new FindNextChunk(loadedContext),
+        { chunk: makeChunk(100 + chunkLength * 2), context: loadedContext }
+      ],
+      [new FindClose(loadedContext)]
     ];
 
-    testCommands(dataLoader(dateFrom, dateTo, ""), commandTable, expectResult);
+    testCommands(
+      dataLoader(dateFrom, dateTo, "", startContext),
+      commandTable,
+      expectResult
+    );
   });
 
   it("test for load right", () => {
+    const startContext = { db: "nothing" };
+    const openedContext = { db: 1 };
+    const loadedContext = { db: 2 };
+
     const testFromEmptyState = [
-      [new FindStartChunk(dateFrom, ""), { chunk: makeChunk(100) }],
-      [new FindNextChunk(), {}],
-      [new LoadChunks(150, dateTo, ""), {}],
-      [new FindStartChunk(150, ""), { chunk: makeChunk(150) }],
-      [new FindNextChunk(), { chunk: makeChunk(200) }]
+      [
+        new FindStartChunk(dateFrom, "", startContext),
+        { chunk: makeChunk(100), context: openedContext }
+      ],
+      [new FindNextChunk(openedContext), { context: openedContext }],
+      [new FindClose(openedContext)],
+      [new LoadChunks(150, dateTo, ""), loadedContext],
+      [
+        new FindStartChunk(150, "", loadedContext),
+        { chunk: makeChunk(150), context: loadedContext }
+      ],
+      [
+        new FindNextChunk(loadedContext),
+        { chunk: makeChunk(200), context: loadedContext }
+      ],
+      [new FindClose(loadedContext)]
     ];
 
     let chunks = makeChunk(100, 3);
     const startIdx = dateFrom - chunks[0].date;
     const expectResult = chunks.slice(startIdx, startIdx + dateCnt);
     testCommands(
-      dataLoader(dateFrom, dateTo, ""),
+      dataLoader(dateFrom, dateTo, "", startContext),
       testFromEmptyState,
       expectResult
     );
   });
 
   it("test for all loaded", () => {
+    const startContext = { db: "nothing" };
+    const loadedContext = { db: 1 };
+
     const commandTable = [
-      [new FindStartChunk(dateFrom, ""), { chunk: makeChunk(100) }],
-      [new FindNextChunk(), { chunk: makeChunk(150) }],
-      [new FindNextChunk(), { chunk: makeChunk(200) }]
+      [
+        new FindStartChunk(dateFrom, "", startContext),
+        { chunk: makeChunk(100), context: openedContext }
+      ],
+      [
+        new FindNextChunk(loadedContext),
+        { chunk: makeChunk(150), context: openedContext }
+      ],
+      [
+        new FindNextChunk(loadedContext),
+        { chunk: makeChunk(200), context: openedContext }
+      ],
+      [new FindClose(loadedContext)]
     ];
 
-    testCommands(dataLoader(dateFrom, dateTo, ""), commandTable, expectResult);
+    testCommands(
+      dataLoader(dateFrom, dateTo, "", startContext),
+      commandTable,
+      expectResult
+    );
   });
 });

@@ -1,8 +1,17 @@
-import { assert } from '../../lib/utils/index.js';
-import { FindStartChunk, FindNextChunk, FindClose, LoadChunks } from './commands';
+import { assert } from "../../lib/utils/index.js";
+import {
+  FindStartChunk,
+  FindNextChunk,
+  FindClose,
+  LoadChunks
+} from "./commands";
 
 export function* dataLoader(dateFrom, dateTo, collection, startContext) {
-  let { chunk, context } = yield new FindStartChunk(dateFrom, collection, startContext);
+  let { chunk, context } = yield new FindStartChunk(
+    dateFrom,
+    collection,
+    startContext
+  );
   const data = [];
   let dataEnd = dateFrom - 1;
 
@@ -36,7 +45,12 @@ export function* dataLoader(dateFrom, dateTo, collection, startContext) {
   } else {
     assert(!chunk);
     const context = yield new LoadChunks(dataEnd + 1, dateTo, collection);
-    const finalData = yield* dataLoader(dataEnd + 1, dateTo, collection, context);
+    const finalData = yield* dataLoader(
+      dataEnd + 1,
+      dateTo,
+      collection,
+      context
+    );
     return data.concat(finalData);
   }
 }

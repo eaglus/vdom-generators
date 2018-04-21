@@ -5,15 +5,8 @@ import {
   LoadChunks
 } from "./commands";
 import { assert } from "../../lib/utils/index.js";
+import { openIndexedDB } from "../../lib/utils/indexedDB.js";
 import { alignToMonthStart, alignToMonthEnd } from "../../lib/utils/date.js";
-import {
-  openIndexedDB,
-  indexOpenCursor,
-  cursorContinue,
-  objectStoreGet,
-  objectStorePut,
-  getResult
-} from "../../lib/utils/indexedDB.js";
 
 export function splitToMonths(data) {
   const monthsData = [];
@@ -21,7 +14,8 @@ export function splitToMonths(data) {
   let currentYear;
   let currentMonth;
   let prevDate = 0;
-  data.forEach((value, index) => {
+
+  data.forEach(value => {
     const date = new Date(value.date);
 
     assert(prevDate < value.date, "Bad date order in input data");
@@ -57,71 +51,70 @@ export function splitToMonths(data) {
 }
 
 export function createCommandHandler(env) {
-  const IndexedDB = env.IndexedDB;
   const getDbPromise = () => {
     return openIndexedDB(env, "meteodb", 1, upgradeDB => {
-      const temperature = upgradeDB.createObjectStore("temperature", { keyPath: "date" });
+      const temperature = upgradeDB.createObjectStore("temperature", {
+        keyPath: "date"
+      });
       temperature.createIndex("date", "date", { unique: true });
 
-      const precipitation = upgradeDB.createObjectStore("precipitation", { keyPath: "date" });
+      const precipitation = upgradeDB.createObjectStore("precipitation", {
+        keyPath: "date"
+      });
       precipitation.createIndex("date", "date", { unique: true });
     });
   };
 
-  return command => {
+  return (command, callback, errorCallback) => {
     if (command instanceof FindStartChunk) {
       const { context, collection, date } = command;
-      const dbPromise = context.db || getDbPromise();
+      const dbPromise =
+        context && context.db ? Promise.resolve(context.db) : getDbPromise();
 
-      return dbPromise
+      dbPromise
         .then(db => {
           const tx = db.transaction(collection, "readonly");
           const store = tx.objectStore(collection);
-          const range = env.IDBKeyRange.lowerBound(date);
+          const range = env.IDBKeyRange.lowerBound(alignToMonthStart(date));
           const index = store.index("date");
-          return indexOpenCursor(index, range).then(result => [db, result]);
-        })
-        .then(([db, [cursor, cursorRequest]]) => {
-          const key = cursor && cursor.key;
-          const value = cursor && cursor.value;
-          return {
-            chunk: key !== undefined ? value.data : undefined,
-            context: {
-              db,
-              cursor,
-              cursorRequest
-            }
-          };
-        });
-    } else if (command instanceof FindNextChunk) {
-      const {
-        context: { db, cursor, cursorRequest }
-      } = command;
-      return cursorContinue(cursor, cursorRequest).then(
-        ([cursor, cursorRequest]) => {
-          const key = cursor.key;
-          if (key === undefined) {
-            db.close();
-            return {};
-          } else {
-            const value = cursor.value;
-            return {
-              chunk: value.data,
+          const request = index.openCursor(range);
+          request.onsuccess = event => {
+            const cursor = event.target.result;
+            const key = cursor && cursor.key;
+            const value = cursor && cursor.value;
+            callback({
+              chunk: key !== undefined ? value.data : undefined,
               context: {
                 db,
                 cursor,
-                cursorRequest
+                request
               }
-            };
-          }
-        }
-      );
+            });
+          };
+          request.onerror = errorCallback;
+        })
+        .catch(errorCallback);
+    } else if (command instanceof FindNextChunk) {
+      const { context } = command;
+      const { cursor, request } = context;
+
+      cursor.continue();
+      request.onsuccess = () => {
+        const key = cursor.key;
+        const value = key ? cursor.value : undefined;
+        const chunk = value && value.data;
+        callback({
+          chunk,
+          context
+        });
+      };
+      request.onerror = errorCallback;
     } else if (command instanceof FindClose) {
       const {
         context: { db }
       } = command;
       db.close();
-      return null;
+      callback({});
     } else if (command instanceof LoadChunks) {
       const { dateFrom, dateTo, collection } = command;
       const dataPromise = env.serverApi.loadRange(
@@ -133,24 +126,17 @@ export function createCommandHandler(env) {
         return getDbPromise().then(db => {
           const tx = db.transaction(collection, "readwrite");
 
-          const complete = new Promise((resolve, reject) => {
-            tx.oncomplete = resolve;
-            tx.onerror = reject;
+          tx.oncomplete = () => {
+            callback({ db });
+          };
+          tx.onerror = errorCallback;
 
-            const store = tx.objectStore(collection);
-            const splitted = splitToMonths(data);
+          const store = tx.objectStore(collection);
+          const splitted = splitToMonths(data);
 
-            splitted.forEach(monthData => {
-              if (monthData.data.length !== 0) {
-                store.put(monthData);
-              }
-            });
-          });
-          return complete.then(() => ({
-            db
-          }));
-        });
-      });
+          splitted.forEach(monthData => store.put(monthData));
+        }, errorCallback);
+      }, errorCallback);
     }
   };
 }

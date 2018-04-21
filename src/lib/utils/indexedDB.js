@@ -26,37 +26,48 @@ export function openIndexedDB(env, dbName, version, upgradeFn) {
 }
 
 export function indexOpenCursor(index, range) {
+  const request = index.openCursor(range);
+  let result;
+  let error;
+
+  request.onsuccess = resolveResultWithTarget(res => {
+    result = res;
+  });
+  request.onerror = rejectErrorCode(err => {
+    error = err;
+  }, `Error continue cursor`);
+
   return new Promise((resolve, reject) => {
-    const request = index.openCursor(range);
-    request.onsuccess = resolveResultWithTarget(resolve);
-    request.onerror = rejectErrorCode(reject, `Error open cursor`);
+    if (result) {
+      resolve(result);
+    } else if (error) {
+      reject(error);
+    } else {
+      request.onsuccess = resolveResultWithTarget(resolve);
+      request.onerror = rejectErrorCode(reject, `Error continue cursor`);
+    }
   });
 }
 
-export function cursorContinue(cursor, cursorRequest) {
-  return new Promise((resolve, reject) => {
-    cursorRequest.onsuccess = resolveResultWithTarget(resolve);
-    cursorRequest.onerror = rejectErrorCode(reject, `Error continue cursor`);
-    cursor.continue();
+export function cursorContinue(cursor, request) {
+  let result;
+  let error;
+  request.onsuccess = resolveResultWithTarget(res => {
+    result = res;
   });
-}
+  request.onerror = rejectErrorCode(err => {
+    error = err;
+  }, `Error continue cursor`);
 
-export function objectStoreGet(store, key) {
+  cursor.continue();
   return new Promise((resolve, reject) => {
-    const request = store.get(key);
-    request.onsuccess = resolveResult(resolve);
-    request.onerror = rejectErrorCode(reject, "Can't get a value by key" + key);
-  });
-}
-
-export function objectStorePut(store, value) {
-  return new Promise((resolve, reject) => {
-    console.log('PUT', value.date);
-    const request = store.put(value);
-    request.onsuccess = resolveResult(resolve);
-    request.onerror = rejectErrorCode(
-      reject,
-      "Can't put a value with key " + value.date
-    );
+    if (result) {
+      resolve(result);
+    } else if (error) {
+      reject(error);
+    } else {
+      request.onsuccess = resolveResultWithTarget(resolve);
+      request.onerror = rejectErrorCode(reject, `Error continue cursor`);
+    }
   });
 }
