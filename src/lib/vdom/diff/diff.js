@@ -15,13 +15,12 @@ import { isTextNode } from "../../utils/vdom.js";
 function normalizeRendered(rendered) {
   if (!rendered) {
     return [];
-  }
-  else if (Array.isArray(rendered)) {
+  } else if (Array.isArray(rendered)) {
     return rendered;
-  } else if (typeof rendered === 'object') {
+  } else if (typeof rendered === "object") {
     return [rendered];
   } else {
-    throw new Error('Bad render value');
+    throw new Error("Bad render value");
   }
 }
 function* append(newVNode, parentContext, isAppendRoot, insertContext) {
@@ -225,7 +224,7 @@ export function* diff(newVNode, context, parentContext) {
         };
       }
       if (vNode.isComponent) {
-        yield new UpdateComponent(updatedContext);
+        yield new UpdateComponent(updatedContext, childrenChanged);
         return updatedContext;
       } else {
         yield new UpdateNode(updatedContext, context);

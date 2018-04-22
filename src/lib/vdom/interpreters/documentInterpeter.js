@@ -17,7 +17,14 @@ import {
   omit,
   assert
 } from "../../utils/index.js";
-import { normalizeProps, isTextNode, setAttributes, removeAttributes, setProps, removeProps } from "../../utils/vdom.js";
+import {
+  normalizeProps,
+  isTextNode,
+  setAttributes,
+  removeAttributes,
+  setProps,
+  removeProps
+} from "../../utils/vdom.js";
 
 let contextId = 0;
 function createContextId() {
@@ -78,9 +85,9 @@ function updateRootContext(rootContext, addEvents, removeEvents, queueAction) {
       const eventCnt = events && events[eventName];
       events = events
         ? {
-          ...events,
-          [eventName]: eventCnt ? eventCnt + 1 : 1
-        }
+            ...events,
+            [eventName]: eventCnt ? eventCnt + 1 : 1
+          }
         : { [eventName]: 1 };
     }
   }
@@ -97,7 +104,7 @@ function updateRootContext(rootContext, addEvents, removeEvents, queueAction) {
 }
 
 function validateElement(context) {
-  assert(!!context, 'Bad context');
+  assert(!!context, "Bad context");
 
   let element = context.element;
   const body = document.body;
@@ -105,7 +112,7 @@ function validateElement(context) {
     element = element.parentElement;
   }
 
-  assert(!!element, 'Bad element');
+  assert(!!element, "Bad element");
 }
 
 function updateContextById(context, id, rootContext, mutable) {
@@ -126,7 +133,7 @@ function updateContextById(context, id, rootContext, mutable) {
     return {
       ...rootContext,
       contextById: newContextById
-    }
+    };
   }
 }
 
@@ -250,21 +257,23 @@ function handleAppendComponent(command, rootContext) {
     parentElement: parentContext.element
   };
 
-  let queueAction;
-  if (instance) {
-    queueAction =
-      instance.componentDidMount && (() => instance.componentDidMount());
-  }
-
   return {
     context,
-    rootContext: updateRootContext(rootContext, null, null, queueAction)
+    rootContext
   };
 }
 
 function handleAppendClose(command, rootContext) {
   const { context, childContexts, insertContext } = command;
-  const { vNode, fragment, parentElement, parentContext, instance, id, parentId } = context;
+  const {
+    vNode,
+    fragment,
+    parentElement,
+    parentContext,
+    instance,
+    id,
+    parentId
+  } = context;
   const { isComponent } = vNode;
 
   if (fragment) {
@@ -302,9 +311,15 @@ function handleAppendClose(command, rootContext) {
   rootContext = updateContextById(newContext, id, rootContext);
   setInstanceProps(newContext, rootContext.requestUpdate);
 
+  let queueAction;
+  if (instance) {
+    queueAction =
+      instance.componentDidMount && (() => instance.componentDidMount());
+  }
+
   return {
     context: newContext,
-    rootContext
+    rootContext: updateRootContext(rootContext, null, null, queueAction)
   };
 }
 
@@ -422,8 +437,6 @@ function handleUpdateNode(command, rootContext) {
         delete element.virtualEvents;
       }
     }
-    hasUpdates = attrsDiff || propsDiff || styleDiff || eventsDiff;
-
     const oldDomEvents = getDomEvents(oldProps.events);
     const newDomEvents = getDomEvents(newEvents);
     const diffEvents = diffProps(oldDomEvents, newDomEvents);
@@ -447,7 +460,11 @@ function handleUpdateNode(command, rootContext) {
       newRootContext = rootContext;
     }
 
-    newRootContext = updateContextById(newContext, newContext.id, newRootContext);
+    newRootContext = updateContextById(
+      newContext,
+      newContext.id,
+      newRootContext
+    );
   }
 
   return {
@@ -457,10 +474,11 @@ function handleUpdateNode(command, rootContext) {
 }
 
 function handleUpdateComponent(command, rootContext) {
-  const { context } = command;
+  const { context, hasChanged } = command;
   const { instance } = context;
   const queueAction =
     instance &&
+    hasChanged &&
     instance.componentDidUpdate &&
     (() => instance.componentDidUpdate());
 
@@ -494,7 +512,13 @@ function domEventHandler(event) {
   }
 }
 
-export function applyDiff(newVNode, oldContext, parentContext, rootContext, dispatch) {
+export function applyDiff(
+  newVNode,
+  oldContext,
+  parentContext,
+  rootContext,
+  dispatch
+) {
   rootContext = {
     ...rootContext,
     dispatch,
@@ -599,8 +623,7 @@ function execQueue(queue, dispatch) {
 export function makeUpdater(rootElement, dispatch) {
   let mountContext = null;
 
-  let rootContext = {
-  };
+  let rootContext = {};
 
   const topParentContext = {
     element: rootElement
@@ -626,11 +649,7 @@ export function makeUpdater(rootElement, dispatch) {
 
     assert(getContextById(innerContext.id, rootContext) === innerContext);
 
-    updateParent(
-      innerContext,
-      oldInnerContext,
-      rootContext
-    );
+    updateParent(innerContext, oldInnerContext, rootContext);
 
     const queue = rootContext.queue;
     rootContext = omit(rootContext, "queue");

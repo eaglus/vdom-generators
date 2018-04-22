@@ -64,7 +64,7 @@ export class YearSelector extends Component {
     }
   }
 
-  componentWillUmount() {
+  componentWillUnmount() {
     this.removeDocumentListeners();
   }
 

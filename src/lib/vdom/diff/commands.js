@@ -46,7 +46,8 @@ export class UpdateNode {
 }
 
 export class UpdateComponent {
-  constructor(context) {
+  constructor(context, hasChanged) {
     this.context = context;
+    this.hasChanged = hasChanged;
   }
 }
