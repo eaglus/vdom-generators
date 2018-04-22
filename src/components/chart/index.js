@@ -1,5 +1,6 @@
 import { h } from "../../lib/vdom/h.js";
 import { bemClassProps } from "../../lib/utils/vdom.js";
+import { lowerBound, upperBound } from "../../lib/utils/index.js";
 import { Component } from "../../lib/vdom/component.js";
 
 const pClass = bemClassProps("chart");
@@ -8,16 +9,31 @@ function last(data) {
   return data[data.length - 1];
 }
 
+function dateComparer(p1, p2) {
+  return p1.date - p2.date;
+}
+
 const lineColor = "red";
+const xAxisHeight = 40;
+const yAxisWidth = 60;
+const chartPadding = 10;
+
+const zoomStepFactor = 0.05;
 
 export class Chart extends Component {
   constructor() {
     super();
     this.updateElement = this.updateElement.bind(this);
+    this.onMouseWheel = this.onMouseWheel.bind(this);
+    this.onMouseDown = this.onMouseDown.bind(this);
+    this.state = {
+      width: '',
+      height: ''
+    };
   }
 
-  shouldComponentUpdate(nextProps) {
-    return nextProps.data !== this.props.data;
+  shouldComponentUpdate(nextProps, nextChildren, nextState) {
+    return nextProps.data !== this.props.data || nextState !== this.state;
   }
 
   updateElement(element) {
@@ -31,9 +47,33 @@ export class Chart extends Component {
 
   updateData() {
     const { data } = this.props;
+
+    this.width = this.state.width - yAxisWidth - chartPadding * 2;
+    this.height = this.state.height - xAxisHeight - chartPadding * 2;
+    this.topOffset = chartPadding;
+    this.leftOffset = chartPadding;
+
     if (data.length) {
       this.xRange = [data[0].date, last(data).date];
-      this.yRange = data.reduce(
+      this.setZoomXRange(this.xRange);
+    } else {
+      this.clear();
+    }
+  }
+
+  setZoomXRange(range) {
+    this.zoomXRange = range;
+
+    const { data } = this.props;
+    const [ xMin, xMax ] = this.zoomXRange;
+
+    const zoomIndexL = lowerBound(data, {date: xMin}, dateComparer);
+    const zoomIndexR = upperBound(data, {date: xMax}, dateComparer);
+
+    this.zoomedData = data.slice(zoomIndexL, zoomIndexR);
+
+    if (this.zoomedData.length) {
+      this.yRange = this.zoomedData.reduce(
         (range, { value }) => [
           Math.min(value, range[0]),
           Math.max(value, range[1])
@@ -41,11 +81,9 @@ export class Chart extends Component {
         [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]
       );
     } else {
-      this.xRange = [];
       this.yRange = [];
     }
 
-    const [xMin, xMax] = this.xRange;
     const [yMin, yMax] = this.yRange;
 
     this.xFactor = this.width / (xMax - xMin);
@@ -53,29 +91,121 @@ export class Chart extends Component {
     this.xAdd = -xMin * this.xFactor;
     this.yAdd = -yMin * this.yFactor;
 
-    this.dataPointToChart = p => ({
-      x: Math.round(p.date * this.xFactor + this.xAdd),
-      y: Math.round(this.height - (p.value * this.yFactor + this.yAdd))
+    this.dataPointToChartPoint = p => ({
+      x: this.leftOffset + Math.round(p.date * this.xFactor + this.xAdd),
+      y: this.topOffset + Math.round(this.height - (p.value * this.yFactor + this.yAdd))
     });
-    //this.dataPointToChart = p => p;
 
-    this.context.clearRect(0, 0, this.width, this.height);
-    this.drawSerie();
+    this.chartPointToDataPoint = ({x, y}) => {
+      const dateDiff = ((x - this.leftOffset) / this.width) * this.getZoomXRangeWidth();
+      const date = xMin + dateDiff;
+      
+      const valueDiff = ((y - this.topOffset) / this.height) * this.getZoomYRangeWidth();
+      const value = yMin + valueDiff;
+
+      return {
+        date, 
+        value
+      };
+    };
+
+    this.draw();
   }
 
-  drawSerie() {
+  screenToClient({screenX, screenY}) {
+    const bcr = this.canvas.getBoundingClientRect();
+    return {
+      x: screenX - bcr.left,
+      y: screenX - bcr.top,
+    };
+  }
+
+  getZoomXRangeWidth() {
+    return this.zoomXRange[1] - this.zoomXRange[0];
+  }
+
+  getZoomYRangeWidth() {
+    return this.yRange[1] - this.yRange[0];
+  }
+
+  onMouseWheel(e) {
+    const {deltaY, wheelDelta} = e;
+    const zoomDir = wheelDelta > 0 ? 1 : -1;
+    const {x} = this.screenToClient(e);
+
+    if (x > this.leftOffset && x < this.leftOffset + this.width) {
+      const xPosRatio = (x - this.leftOffset) / this.width;
+      const xRangeWidth = this.getZoomXRangeWidth();
+      const dxLeft = xPosRatio * xRangeWidth * zoomStepFactor * zoomDir;
+      const dxRight = (1 - xPosRatio) * xRangeWidth * zoomStepFactor * zoomDir;
+      const newZoomRange = [
+        this.zoomXRange[0] + dxLeft,
+        this.zoomXRange[1] - dxRight,
+      ];
+      this.setZoomXRange(newZoomRange);
+    }
+  }
+
+  onMouseDown(e) {
+    let {x: prevX} = this.screenToClient(e);
+    e.preventDefault();
+
+    const mouseMove = e => {
+      const {x, y} = this.screenToClient(e);
+      const {date} = this.chartPointToDataPoint({x, y});
+      const {date: prevDate} = this.chartPointToDataPoint({x: prevX, y});
+      prevX = x;
+
+      const diff = prevDate - date;
+      const newZoomRange = [
+        this.zoomXRange[0] + diff,
+        this.zoomXRange[1] + diff,
+      ];
+      this.setZoomXRange(newZoomRange);
+    };
+
+    const mouseUp = () => {
+      document.removeEventListener('mousemove', mouseMove, true);
+      document.removeEventListener('mouseup', mouseUp, true);
+    };
+
+    document.addEventListener('mousemove', mouseMove, true);
+    document.addEventListener('mouseup', mouseUp, true);
+  }
+
+  componentDidMount() {
+    this.setState({
+      width: this.canvas.offsetWidth,
+      height: this.canvas.offsetHeight,
+    });
+  }
+
+  componentDidUpdate() {
+    this.updateData();
+  }
+
+  clear() {
+    this.context.clearRect(0, 0, this.state.width, this.state.height);
+  }
+
+  draw() {
+    this.clear();
+    this.drawSeries();
+  }
+
+  drawSeries() {
     const ctx = this.context;
     ctx.strokeStyle = lineColor;
 
-    const { data } = this.props;
+    const data = this.zoomedData;
     const ln = data.length;
     if (data.length) {
-      let prevP = this.dataPointToChart(data[0]);
+      let prevP = this.dataPointToChartPoint(data[0]);
       ctx.moveTo(prevP.x, prevP.y);
 
       ctx.beginPath();
       for (let i = 1; i !== ln; i++) {
-        const p = this.dataPointToChart(data[i]);
+        const p = this.dataPointToChartPoint(data[i]);
         if (p.x - prevP.x > -1) {
           prevP = p;
           ctx.lineTo(p.x, p.y);
@@ -85,24 +215,16 @@ export class Chart extends Component {
     }
   }
 
-  componentDidMount() {
-    this.width = this.canvas.offsetWidth;
-    this.height = this.canvas.offsetHeight;
-    this.updateData();
-  }
-
-  componentDidUpdate() {
-    this.updateData();
-  }
-
   render() {
     const { data } = this.props;
     return h("canvas", {
       ...pClass("root"),
-      width: this.width || 798,
-      height: this.height || 659,
+      width: this.state.width,
+      height: this.state.height,
       onMount: this.updateElement,
-      onUnmount: this.updateElement
+      onUnmount: this.updateElement,
+      onWheel: this.onMouseWheel,
+      onMouseDown: this.onMouseDown,
     });
   }
 }

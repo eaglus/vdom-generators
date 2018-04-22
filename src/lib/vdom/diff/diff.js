@@ -169,10 +169,15 @@ export function* diff(newVNode, context, parentContext) {
         if (instance) {
           const shouldUpdate = instance.shouldComponentUpdate(
             newVNode.props,
-            newVNode.children
+            newVNode.children,
+            instance.nextState || instance.state
           );
           instance.props = newVNode.props;
           instance.children = newVNode.children;
+          if (instance.nextState) {
+            instance.state = instance.nextState;
+            delete instance.nextState;
+          }
           if (shouldUpdate) {
             newChildren = normalizeRendered(instance.render());
           } else {

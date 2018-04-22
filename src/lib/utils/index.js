@@ -69,3 +69,31 @@ export function diffProps(oldProps, newProps) {
 export function compose(fn1, fn2) {
   return v => fn1(fn2(v));
 }
+
+export function lowerBound(arr, value, compareFn) {
+  let l = 0;
+  let h = arr.length;
+  while (l !== h) {
+    const m = Math.floor((l + h) / 2);
+    if (compareFn(arr[m], value) >= 0) {
+      h = m;
+    } else {
+      l = m + 1;
+    }
+  }
+  return l;
+}
+
+export function upperBound(arr, value, compareFn) {
+  let l = -1;
+  let h = arr.length - 1;
+  while (l !== h) {
+    const m = Math.ceil((l + h) / 2);
+    if (compareFn(arr[m], value) <= 0) {
+      l = m;
+    } else {
+      h = m - 1;
+    }
+  }
+  return l;
+}

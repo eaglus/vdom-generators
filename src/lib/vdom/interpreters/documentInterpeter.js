@@ -85,9 +85,9 @@ function updateRootContext(rootContext, addEvents, removeEvents, queueAction) {
       const eventCnt = events && events[eventName];
       events = events
         ? {
-            ...events,
-            [eventName]: eventCnt ? eventCnt + 1 : 1
-          }
+          ...events,
+          [eventName]: eventCnt ? eventCnt + 1 : 1
+        }
         : { [eventName]: 1 };
     }
   }
@@ -154,7 +154,7 @@ function setInstanceProps(newContext, requestUpdate) {
   const { instance } = newContext;
   if (instance) {
     instance.setState = state => {
-      instance.state = {
+      instance.nextState = {
         ...instance.state,
         ...state
       };

@@ -5,6 +5,6 @@ export function loadRange(dateFrom, dateTo, collection) {
       fetch(url)
         .then(response => response.json())
         .then(resolve, reject);
-    }, 2000);
+    }, 200);
   });
 }
