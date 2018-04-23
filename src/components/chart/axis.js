@@ -1,11 +1,21 @@
+import { lowerBound } from "../../lib/utils/index.js";
+
 const step10 = Math.sqrt(50);
 const step5 = Math.sqrt(10);
 const step2 = Math.sqrt(2);
 
+const durationSecond = 1000;
+const durationMinute = durationSecond * 60;
+const durationHour = durationMinute * 60;
+const durationDay = durationHour * 24;
+const durationWeek = durationDay * 7;
+const durationMonth = durationDay * 30;
+const durationYear = durationDay * 365;
+
 function makeLinearTicks(range, ticksCount) {
   const [start, end] = range;
-  const step = (end - start) / Math.max(0, ticksCount);
-  const power = Math.floor(Math.log(step) / Math.LN10);
+  const step = (end - start) / ticksCount;
+  const power = Math.log10(step);
 
   const stepNormalized = step / Math.pow(10, power);
 
@@ -43,6 +53,49 @@ function makeLinearTicks(range, ticksCount) {
     return result;
   } else {
     return [];
+  }
+}
+
+function makeTimeTicks(range, ticksCount) {
+  const tickIntervals = [
+    [durationSecond],
+    [5 * durationSecond],
+    [15 * durationSecond],
+    [30 * durationSecond],
+    [durationMinute],
+    [5 * durationMinute],
+    [15 * durationMinute],
+    [30 * durationMinute],
+    [durationHour],
+    [3 * durationHour],
+    [6 * durationHour],
+    [12 * durationHour],
+    [durationDay],
+    [2 * durationDay],
+    [durationWeek],
+    [durationMonth],
+    [3 * durationMonth],
+    [durationYear]
+  ];
+
+  const [start, end] = range;
+  const step = (end - start) / ticksCount;
+
+  const intervalIdx = lowerBound(
+    tickIntervals,
+    step,
+    interval => interval[0] - step
+  );
+
+  if (intervalIdx === tickIntervals.length) {
+    const rangeYear = [start / durationYear, end / durationYear];
+    return makeLinearTicks(rangeYear, ticksCount);
+  } else if (intervalIdx === 0) {
+    return makeLinearTicks(range, ticksCount);
+  } else {
+    // i = tickIntervals[step / tickIntervals[i - 1][2] < tickIntervals[i][2] / step ? i - 1 : i];
+    // step = i[1];
+    // interval = i[0];
   }
 }
 
