@@ -97,3 +97,7 @@ export function upperBound(arr, value, compareFn) {
   }
   return l;
 }
+
+export function last(data) {
+  return data[data.length - 1];
+}
