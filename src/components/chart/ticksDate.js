@@ -34,6 +34,15 @@ function formatTime(date, secondsDiffers) {
   return date.toLocaleTimeString(undefined, options);
 }
 
+function findLastIndex(array, callback) {
+  for (let i = array.length - 1; i !== -1; i--) {
+    if (callback(array[i], i)) {
+      return i;
+    }
+  }
+  return -1;
+}
+
 function dateTimeFormatter(prevDate, date) {
   if (prevDate === date) {
     return {
@@ -44,19 +53,17 @@ function dateTimeFormatter(prevDate, date) {
     const prevSplit = splitDate(prevDate);
     const split = splitDate(date);
     const diffStart = split.findIndex((part, i) => part !== prevSplit[i]);
-    const diffEnd = split
-      .reverse()
-      .findIndex((part, i) => part !== prevSplit[i]);
+    const diffEnd = findLastIndex(split, (part, i) => part !== prevSplit[i]);
 
     if (diffEnd > 2) {
       const timeStr = formatTime(date, diffEnd === 5);
       if (diffStart >= 0 && diffStart < 3) {
-        return [timeStr, date.toLocaleTimeString()];
+        return [timeStr, date.toLocaleDateString()];
       } else {
         return [timeStr];
       }
     } else {
-      const dateStr = date.toLocaleTimeString(undefined, {
+      const dateStr = date.toLocaleDateString(undefined, {
         month: "numeric",
         day: "numeric"
       });
@@ -165,7 +172,10 @@ export function makeDateTimeTicks(range, ticksCount) {
       labels: [year]
     }));
   } else if (intervalIdx === 0) {
-    return makeLinearTicks(range, ticksCount);
+    return makeLinearTicks(range, ticksCount).map(milliseconds => ({
+      date: milliseconds,
+      labels: [milliseconds]
+    }));
   } else {
     let interval, getAligned, getNext;
     if (Array.isArray(tickIntervals[intervalIdx])) {
@@ -179,11 +189,14 @@ export function makeDateTimeTicks(range, ticksCount) {
     const ticks = [];
     let prevDate = startAligned;
     for (let date = startAligned; date < end; date = getNext(date)) {
-      ticks.push({
-        date: Number(date),
-        labels: dateTimeFormatter(prevDate, date)
-      });
-      prevDate = date;
+      const diff = date - prevDate;
+      if (diff === 0 || diff > interval) {
+        ticks.push({
+          date: Number(date),
+          labels: dateTimeFormatter(prevDate, date)
+        });
+        prevDate = date;
+      }
     }
     return ticks;
   }

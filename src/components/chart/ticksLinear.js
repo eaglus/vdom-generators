@@ -35,7 +35,7 @@ export function makeLinearTicks(range, ticksCount) {
     } else {
       const startInt = Math.floor(start * increment);
       const endInt = Math.ceil(end * increment);
-      const cnt = endInt - startInt + 1;
+      const cnt = Math.abs(endInt - startInt + 1);
       for (let i = 0; i !== cnt; i++) {
         result.push((startInt - i) / increment);
       }
