@@ -3,7 +3,7 @@ import { bemClassProps } from "../../lib/utils/vdom.js";
 import { lowerBound, upperBound, last } from "../../lib/utils/index.js";
 import { Component } from "../../lib/vdom/component.js";
 
-import { drawYAxis } from "./axis.js";
+import { drawXAxis, drawYAxis } from "./axis.js";
 
 const pClass = bemClassProps("chart");
 
@@ -13,7 +13,8 @@ function dateComparer(p1, p2) {
 
 const lineColor = "red";
 const axisColor = "black";
-const xAxisHeight = 40;
+const xAxisHeight = 30;
+const xAxisLabelWidth = 60;
 const yAxisWidth = 60;
 const chartPadding = 10;
 const axisFontHeight = 12;
@@ -92,20 +93,31 @@ export class Chart extends Component {
     this.yAdd = -yMin * this.yFactor;
 
     this.dataPointToChartPoint = p => ({
-      x: this.leftOffset + Math.round(p.date * this.xFactor + this.xAdd),
+      x:
+        p.date !== undefined
+          ? this.leftOffset + Math.round(p.date * this.xFactor + this.xAdd)
+          : undefined,
       y:
-        this.topOffset +
-        Math.round(this.height - (p.value * this.yFactor + this.yAdd))
+        p.value !== undefined
+          ? this.topOffset +
+            Math.round(this.height - (p.value * this.yFactor + this.yAdd))
+          : undefined
     });
 
     this.chartPointToDataPoint = ({ x, y }) => {
-      const dateDiff =
-        (x - this.leftOffset) / this.width * this.getZoomXRangeWidth();
-      const date = xMin + dateDiff;
+      let date;
+      if (x !== undefined) {
+        const dateDiff =
+          (x - this.leftOffset) / this.width * this.getZoomXRangeWidth();
+        date = xMin + dateDiff;
+      }
 
-      const valueDiff =
-        (y - this.topOffset) / this.height * this.getZoomYRangeWidth();
-      const value = yMin + valueDiff;
+      let value;
+      if (y !== undefined) {
+        const valueDiff =
+          (y - this.topOffset) / this.height * this.getZoomYRangeWidth();
+        value = yMin + valueDiff;
+      }
 
       return {
         date,
@@ -197,17 +209,30 @@ export class Chart extends Component {
       this.clear();
       this.drawSeries();
 
-      drawYAxis(
-        this.context,
-        this.chartPointToDataPoint,
-        this.dataPointToChartPoint,
-        this.leftOffset + this.width,
-        this.topOffset,
-        yAxisWidth,
-        this.height,
-        axisFontHeight,
-        axisColor
-      );
+      const axisOptions = {
+        context: this.context,
+        chartPointToDataPoint: this.chartPointToDataPoint,
+        dataPointToChartPoint: this.dataPointToChartPoint,
+        fontHeight: axisFontHeight,
+        color: axisColor
+      };
+
+      drawYAxis({
+        ...axisOptions,
+        left: this.leftOffset + this.width + chartPadding,
+        top: this.topOffset,
+        width: yAxisWidth - chartPadding,
+        height: this.height
+      });
+
+      drawXAxis({
+        ...axisOptions,
+        left: this.leftOffset,
+        top: this.topOffset + this.height + chartPadding,
+        width: this.width,
+        fontHeight: axisFontHeight,
+        labelWidth: xAxisLabelWidth
+      });
     });
   }
 
@@ -234,7 +259,6 @@ export class Chart extends Component {
   }
 
   render() {
-    const { data } = this.props;
     return h("canvas", {
       ...pClass("root"),
       width: this.state.width,
