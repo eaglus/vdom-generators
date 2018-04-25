@@ -2,9 +2,7 @@ const step10 = Math.sqrt(50);
 const step5 = Math.sqrt(10);
 const step2 = Math.sqrt(2);
 
-export function makeLinearTicks(range, ticksCount) {
-  const [start, end] = range;
-  const step = (end - start) / ticksCount;
+export function getStepIncrement(step) {
   const power = Math.floor(Math.log10(step));
 
   const stepNormalized = step / Math.pow(10, power);
@@ -18,10 +16,15 @@ export function makeLinearTicks(range, ticksCount) {
           ? 2
           : 1;
 
-  const increment =
-    power >= 0
-      ? stepRounded * Math.pow(10, power)
-      : -Math.pow(10, -power) / stepRounded;
+  return power >= 0
+    ? stepRounded * Math.pow(10, power)
+    : -Math.pow(10, -power) / stepRounded;
+}
+
+export function makeLinearTicks(range, ticksCount) {
+  const [start, end] = range;
+  const step = (end - start) / ticksCount;
+  const increment = getStepIncrement(step);
 
   if (increment !== 0 && isFinite(increment)) {
     const result = [];

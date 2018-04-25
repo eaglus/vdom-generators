@@ -4,6 +4,7 @@ import { lowerBound, upperBound, last } from "../../lib/utils/index.js";
 import { Component } from "../../lib/vdom/component.js";
 
 import { drawXAxis, drawYAxis } from "./axis.js";
+import { restoreAfterRun } from "./utils.js";
 
 const pClass = bemClassProps("chart");
 
@@ -13,7 +14,7 @@ function dateComparer(p1, p2) {
 
 const lineColor = "red";
 const axisColor = "black";
-const xAxisHeight = 30;
+const xAxisHeight = 50;
 const xAxisLabelWidth = 60;
 const yAxisWidth = 60;
 const chartPadding = 10;
@@ -41,8 +42,15 @@ export class Chart extends Component {
     this.canvas = element;
     if (element) {
       this.context = this.canvas.getContext("2d");
+      this.restoreAfterRun = restoreAfterRun(this.context, this);
+      this.drawFunctions = {
+        drawSeries: this.restoreAfterRun(this.drawSeries),
+        drawXAxis: this.restoreAfterRun(drawXAxis),
+        drawYAxis: this.restoreAfterRun(drawYAxis)
+      };
     } else {
       this.context = null;
+      this.restoreAfterRun = null;
     }
   }
 
@@ -207,7 +215,8 @@ export class Chart extends Component {
   draw() {
     requestAnimationFrame(() => {
       this.clear();
-      this.drawSeries();
+
+      this.drawFunctions.drawSeries();
 
       const axisOptions = {
         context: this.context,
@@ -217,7 +226,7 @@ export class Chart extends Component {
         color: axisColor
       };
 
-      drawYAxis({
+      this.drawFunctions.drawYAxis({
         ...axisOptions,
         left: this.leftOffset + this.width + chartPadding,
         top: this.topOffset,
@@ -225,7 +234,7 @@ export class Chart extends Component {
         height: this.height
       });
 
-      drawXAxis({
+      this.drawFunctions.drawXAxis({
         ...axisOptions,
         left: this.leftOffset,
         top: this.topOffset + this.height + chartPadding,
@@ -238,7 +247,10 @@ export class Chart extends Component {
 
   drawSeries() {
     const ctx = this.context;
-    ctx.strokeStyle = lineColor;
+
+    ctx.beginPath();
+    ctx.rect(this.leftOffset, this.topOffset, this.width, this.height);
+    ctx.clip();
 
     const data = this.zoomedData;
     const ln = data.length;
@@ -247,9 +259,11 @@ export class Chart extends Component {
       ctx.moveTo(prevP.x, prevP.y);
 
       ctx.beginPath();
+      ctx.strokeStyle = lineColor;
+
       for (let i = 1; i !== ln; i++) {
         const p = this.dataPointToChartPoint(data[i]);
-        if (p.x - prevP.x > -1) {
+        if (p.x - prevP.x > 0) {
           prevP = p;
           ctx.lineTo(p.x, p.y);
         }

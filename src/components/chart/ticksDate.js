@@ -1,5 +1,5 @@
-import { lowerBound } from "../../lib/utils/index.js";
-import { makeLinearTicks } from "./ticksLinear.js";
+import { lowerBound, compose } from "../../lib/utils/index.js";
+import { getStepIncrement } from "./ticksLinear.js";
 
 const durationSecond = 1000;
 const durationMinute = durationSecond * 60;
@@ -9,8 +9,7 @@ const durationWeek = durationDay * 7;
 const durationMonth = durationDay * 30;
 const durationYear = durationDay * 365;
 
-function splitDate(ts) {
-  const date = new Date(ts);
+function splitDate(date) {
   return [
     date.getFullYear(),
     date.getMonth(),
@@ -21,120 +20,163 @@ function splitDate(ts) {
   ];
 }
 
-function formatTime(date, secondsDiffers) {
-  const options = {
-    minute: "numeric",
-    hour: "numeric"
-  };
+export const alignToMonths = monthCnt => date => {
+  const [year, month] = splitDate(date);
 
-  if (secondsDiffers) {
-    options.second = "numeric";
+  let monthAligned = month;
+  if (month % monthCnt !== 0) {
+    monthAligned = month - month % monthCnt + monthCnt;
   }
+  return new Date(year, monthAligned, 1);
+};
 
-  return date.toLocaleTimeString(undefined, options);
+export const nextMonths = months => date => {
+  const [year, month] = splitDate(date);
+  const nextMonth = (month + months) % 12;
+  const yearAdd = nextMonth < month ? 1 : 0;
+  return new Date(year + yearAdd, nextMonth, 1);
+};
+
+const nextMonth = nextMonths(1);
+
+function getDaysInMonth(date) {
+  const monthEnd = new Date(Number(nextMonth(date)) - durationDay);
+  return monthEnd.getDate();
 }
 
-function findLastIndex(array, callback) {
-  for (let i = array.length - 1; i !== -1; i--) {
-    if (callback(array[i], i)) {
-      return i;
-    }
-  }
-  return -1;
-}
+const alignToDays = dayCnt => date => {
+  const [year, month, day] = splitDate(date);
 
-function dateTimeFormatter(prevDate, date) {
-  if (prevDate === date) {
-    return {
-      date: date.toLocaleDateString(),
-      time: date.toLocaleTimeString()
-    };
+  let dayAligned = day;
+  if (day % dayCnt !== 0) {
+    dayAligned = day - day % dayCnt + dayCnt;
+  }
+  return new Date(year, month, dayAligned);
+};
+
+const nextDays = days => date => {
+  const dayCount = getDaysInMonth(date);
+
+  const [year, month, day] = splitDate(date);
+  const nextDay = (day + days) % dayCount;
+  if (nextDay < day) {
+    return nextMonth(date);
   } else {
-    const prevSplit = splitDate(prevDate);
-    const split = splitDate(date);
-    const diffStart = split.findIndex((part, i) => part !== prevSplit[i]);
-    const diffEnd = findLastIndex(split, (part, i) => part !== prevSplit[i]);
-
-    if (diffEnd > 2) {
-      const timeStr = formatTime(date, diffEnd === 5);
-      if (diffStart >= 0 && diffStart < 3) {
-        return [timeStr, date.toLocaleDateString()];
-      } else {
-        return [timeStr];
-      }
-    } else {
-      const dateStr = date.toLocaleDateString(undefined, {
-        month: "numeric",
-        day: "numeric"
-      });
-
-      if (diffStart > 0) {
-        return [dateStr];
-      } else if (split[1] !== prevSplit[1] || split[2] !== prevSplit[2]) {
-        return [dateStr, split[0]];
-      } else {
-        return [split[0]];
-      }
-    }
+    return new Date(year, month, nextDay);
   }
-}
+};
 
-function alignToWeek(date) {
-  while (new Date(date).getDay() !== 1) {
-    date = date + durationDay;
+function alignToWeekOrMonth(date) {
+  let dateNum = Number(date);
+  //while (date.getDay() !== 1 && date.getDate() !== 1) {
+  while (date.getDay() !== 1) {
+    dateNum = dateNum + durationDay;
+    date = new Date(dateNum);
   }
   return date;
 }
 
-function alignToMonth(date) {
-  const [year, month, day] = splitDate(date).slice(0, 3);
-  if (day !== 1) {
-    return nextMonth(new Date(year, month, 1));
+function nextWeekOrMonth(date) {
+  const nextDay = Number(date) + durationDay;
+  return alignToWeekOrMonth(new Date(nextDay));
+}
+
+function alignByInterval(date, interval) {
+  const dateNum = Math.ceil(Number(date) / interval) * interval;
+  return new Date(dateNum);
+}
+
+function nextByInterval(date, interval) {
+  const dateNum = interval + Math.ceil(Number(date) / interval) * interval;
+  return new Date(dateNum);
+}
+
+function firstChangedPartIdx(date, prevDate) {
+  const split = splitDate(date);
+  const prevSplit = splitDate(prevDate);
+  return split.findIndex((part, i) => part !== prevSplit[i]);
+}
+
+const formatTime = withSeconds => (date, prevDate) => {
+  const changeStart = firstChangedPartIdx(date, prevDate);
+
+  const timeStrOpts = {
+    hour: "numeric",
+    minute: "numeric"
+  };
+
+  if (withSeconds) {
+    timeStrOpts.second = "numeric";
+  }
+
+  const timeStr = date.toLocaleTimeString(undefined, timeStrOpts);
+
+  if (date === prevDate || changeStart < 3) {
+    const dateStrOpts = {
+      year: "numeric",
+      month: "short",
+      day: "numeric"
+    };
+
+    const dateStr = date.toLocaleDateString(undefined, dateStrOpts);
+    return [timeStr, dateStr];
   } else {
-    return date;
+    return [timeStr];
   }
+};
+
+function formatDate(date, prevDate) {
+  const changeStart = firstChangedPartIdx(date, prevDate);
+
+  const dateStrOpts = {
+    month: "short",
+    day: "numeric"
+  };
+
+  const dateStr = date.toLocaleDateString(undefined, dateStrOpts);
+  const result = [dateStr];
+  if (date === prevDate || changeStart < 1) {
+    result.push(String(date.getFullYear()));
+  }
+  return result;
 }
 
-function alignTo3Month(date) {
-  const [year, month] = splitDate(date).slice(0, 3);
-
-  let monthAligned = month;
-  if (month % 3 !== 0) {
-    if (month < 3) {
-      monthAligned = 0;
-    } else {
-      monthAligned = month - month % 3 + 3;
-    }
-  }
-  return new Date(year, monthAligned, 1);
+function formatYear(date) {
+  return [String(date.getFullYear())];
 }
 
-function nextWeek(date) {
-  return new Date(Number(date) + durationWeek);
-}
+function calculateYearsInterval(step) {
+  const stepYear = step / durationYear;
+  const interval = getStepIncrement(Math.ceil(stepYear));
 
-function nextMonth(date) {
-  const split = splitDate(date).slice(0, 3);
-  if (split[1] === 11) {
-    return new Date(split[0] + 1, 0, 1);
-  } else {
-    split[1]++;
-    return new Date(split);
-  }
-}
+  const getAligned = date => {
+    const year = date.getFullYear();
+    return new Date(Math.ceil(year / interval) * interval, 0, 1);
+  };
 
-function next3Month(date) {
-  const split = splitDate(date).slice(0, 3);
-  if (split[1] > 8) {
-    return new Date(split[0] + 1, 0, 1);
-  } else {
-    split[1] += 3;
-    return new Date(split);
-  }
+  const getNext = date => {
+    const year = date.getFullYear();
+    return new Date(year + interval, 0, 1);
+  };
+
+  return [interval, getAligned, getNext, formatYear];
 }
 
 export function makeDateTimeTicks(range, ticksCount) {
-  const tickIntervals = [
+  const simpleIntervalsSeconds = [
+    durationSecond,
+    5 * durationSecond,
+    15 * durationSecond,
+    30 * durationSecond
+  ].map(interval => [
+    interval,
+    alignByInterval,
+    nextByInterval,
+    formatTime(true)
+  ]);
+
+  const simpleIntervals = [
+    ...simpleIntervalsSeconds,
     durationSecond,
     5 * durationSecond,
     15 * durationSecond,
@@ -146,58 +188,56 @@ export function makeDateTimeTicks(range, ticksCount) {
     durationHour,
     3 * durationHour,
     6 * durationHour,
-    12 * durationHour,
-    durationDay,
-    2 * durationDay,
-    [durationWeek, alignToWeek, nextWeek],
-    [durationMonth, alignToMonth, nextMonth],
-    [3 * durationMonth, alignTo3Month, next3Month],
+    12 * durationHour
+  ].map(interval => [
+    interval,
+    alignByInterval,
+    nextByInterval,
+    formatTime(false)
+  ]);
+
+  const tickIntervals = [
+    ...simpleIntervals,
+    [durationDay, alignByInterval, nextByInterval, formatDate],
+    [2 * durationDay, alignToDays(2), nextDays(2), formatDate],
+    [durationWeek, alignToWeekOrMonth, nextWeekOrMonth, formatDate],
+    [
+      durationWeek * 2,
+      alignToWeekOrMonth,
+      compose(nextWeekOrMonth, nextWeekOrMonth),
+      formatDate
+    ],
+    [durationMonth, alignToMonths(1), nextMonths(1), formatDate],
+    [3 * durationMonth, alignToMonths(3), nextMonths(3), formatDate],
+    [6 * durationMonth, alignToMonths(6), nextMonths(6), formatDate],
     durationYear
   ];
 
   const [start, end] = range;
   const step = (end - start) / ticksCount;
 
-  const compareStep = interval =>
-    Array.isArray(interval) ? interval[0] - step : interval - step;
-
+  const compareStep = interval => interval[0] - step;
   const intervalIdx = lowerBound(tickIntervals, step, compareStep);
 
-  if (intervalIdx >= tickIntervals.length - 1) {
-    const startYear = new Date(start).getFullYear();
-    const endYear = new Date(end).getFullYear();
-    const rangeYear = [startYear, endYear];
-    return makeLinearTicks(rangeYear, ticksCount).map(year => ({
-      date: Number(new Date(year, 0, 1)),
-      labels: [year]
-    }));
-  } else if (intervalIdx === 0) {
-    return makeLinearTicks(range, ticksCount).map(milliseconds => ({
-      date: milliseconds,
-      labels: [milliseconds]
-    }));
-  } else {
-    let interval, getAligned, getNext;
-    if (Array.isArray(tickIntervals[intervalIdx])) {
-      [interval, getAligned, getNext] = tickIntervals[intervalIdx];
-    } else {
-      getAligned = date => date;
-      getNext = date => date + interval;
-    }
+  const [interval, getAligned, getNext, format] =
+    intervalIdx < tickIntervals.length - 1
+      ? tickIntervals[intervalIdx]
+      : calculateYearsInterval(step);
 
-    const startAligned = getAligned(Math.floor(start / interval) * interval);
-    const ticks = [];
-    let prevDate = startAligned;
-    for (let date = startAligned; date < end; date = getNext(date)) {
-      const diff = date - prevDate;
-      if (diff === 0 || diff > interval) {
-        ticks.push({
-          date: Number(date),
-          labels: dateTimeFormatter(prevDate, date)
-        });
-        prevDate = date;
-      }
-    }
-    return ticks;
+  const startAligned = getAligned(new Date(start), interval);
+  const endDate = new Date(end);
+  const ticks = [];
+  let prevDate = startAligned;
+  for (
+    let date = startAligned;
+    date < endDate;
+    date = getNext(date, interval)
+  ) {
+    ticks.push({
+      date: Number(date),
+      labels: format(date, prevDate)
+    });
+    prevDate = date;
   }
+  return ticks;
 }
