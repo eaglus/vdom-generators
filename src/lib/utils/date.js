@@ -57,9 +57,7 @@ export const alignToMonths = monthCnt => date => {
 
 export const nextMonths = months => date => {
   const [year, month] = splitDate(date);
-  const nextMonth = (month + months) % 12;
-  const yearAdd = nextMonth < month ? 1 : 0;
-  return new Date(year + yearAdd, nextMonth, 1);
+  return new Date(year, month + months, 1);
 };
 
 export const nextMonth = nextMonths(1);
@@ -81,15 +79,8 @@ export const alignToDays = dayCnt => date => {
 };
 
 export const nextDays = days => date => {
-  const dayCount = getDaysInMonth(date);
-
   const [year, month, day] = splitDate(date);
-  const nextDay = (day + days) % dayCount;
-  if (nextDay < day) {
-    return nextMonth(date);
-  } else {
-    return new Date(year, month, nextDay);
-  }
+  return new Date(year, month, day + days);
 };
 
 export function alignToWeek(date) {
@@ -139,6 +130,5 @@ export const alignToYears = years => date => {
 
 export const nextYears = years => date => {
   const year = date.getFullYear();
-  const nextYear = Math.floor(year / years) * years + years;
-  return new Date(nextYear, 0, 1);
+  return new Date(year + years, 0, 1);
 };
