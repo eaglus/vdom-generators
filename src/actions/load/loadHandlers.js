@@ -6,7 +6,7 @@ import {
 } from "./commands.js";
 import { assert } from "../../lib/utils/index.js";
 import { openIndexedDB } from "../../lib/utils/indexedDB.js";
-import { alignToMonthStart, alignToMonthEnd } from "../../lib/utils/date.js";
+import { alignToMonthStartUTC, alignToMonthEndUTC } from "../../lib/utils/date.js";
 
 export function splitToMonths(data) {
   const monthsData = [];
@@ -75,7 +75,7 @@ export function createCommandHandler(env) {
         .then(db => {
           const tx = db.transaction(collection, "readonly");
           const store = tx.objectStore(collection);
-          const range = env.IDBKeyRange.lowerBound(alignToMonthStart(date));
+          const range = env.IDBKeyRange.lowerBound(alignToMonthStartUTC(date));
           const index = store.index("date");
           const request = index.openCursor(range);
           request.onsuccess = event => {
@@ -116,8 +116,8 @@ export function createCommandHandler(env) {
     } else if (command instanceof LoadChunks) {
       const { dateFrom, dateTo, collection } = command;
       const dataPromise = env.serverApi.loadRange(
-        alignToMonthStart(dateFrom),
-        alignToMonthEnd(dateTo),
+        alignToMonthStartUTC(dateFrom),
+        alignToMonthEndUTC(dateTo),
         collection
       );
       return dataPromise.then(data => {

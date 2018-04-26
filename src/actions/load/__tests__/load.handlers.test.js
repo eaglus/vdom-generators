@@ -7,7 +7,7 @@ import { createLoader } from "../index.js";
 import { loadRange } from "./mockServerApi.js";
 
 describe("helper functions", () => {
-  it("splitToMonths", () => {
+  test("splitToMonths", () => {
     const data = [
       //test data format: [day, month, year]
       [1, 0, 2017],
@@ -43,7 +43,7 @@ describe("loadHandlers", () => {
     handler = createCommandHandler(environment);
   });
 
-  it("FindStartChunk", done => {
+  test("FindStartChunk", done => {
     const res = handler(
       new FindStartChunk(100500, "temperature", {}),
       result => {
@@ -56,7 +56,7 @@ describe("loadHandlers", () => {
     );
   });
 
-  it("Load chunks", done => {
+  test("Load chunks", done => {
     const dateFrom = Date.UTC(2001, 2, 1);
     const dateTo = Date.UTC(2001, 8, 1);
     const loadChunks = callback =>
@@ -89,7 +89,7 @@ describe("loadHandlers", () => {
     });
   });
 
-  it("FindNextChunk", done => {
+  test("FindNextChunk", done => {
     const dateFrom = Date.UTC(2001, 2, 5);
     const dateTo = Date.UTC(2001, 8, 15);
 
@@ -121,7 +121,7 @@ describe("loadHandlers", () => {
     });
   });
 
-  it("Full load", done => {
+  test("Full load", done => {
     const loader = createLoader(environment);
     const dateFrom = Date.UTC(2001, 2, 5);
     const dateTo = Date.UTC(2001, 8, 15);

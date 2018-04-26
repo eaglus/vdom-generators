@@ -42,7 +42,7 @@ describe("loader commands test", () => {
 
   const openedContext = { db: 1 };
   const loadedContext = { db: 2 };
-  it("test for empty", () => {
+  test("test for empty", () => {
     const commandTable = [
       [new FindStartChunk(dateFrom, ""), { context: openedContext }], //no chunks at start
       [new FindClose(openedContext)],
@@ -65,7 +65,7 @@ describe("loader commands test", () => {
     testCommands(dataLoader(dateFrom, dateTo, ""), commandTable, expectResult);
   });
 
-  it("test for load left", () => {
+  test("test for load left", () => {
     const startContext = { db: "nothing" };
     const openedContext = { db: 1 };
     const loadedContext = { db: 2 };
@@ -98,7 +98,7 @@ describe("loader commands test", () => {
     );
   });
 
-  it("test for load right", () => {
+  test("test for load right", () => {
     const startContext = { db: "nothing" };
     const openedContext = { db: 1 };
     const loadedContext = { db: 2 };
@@ -132,7 +132,7 @@ describe("loader commands test", () => {
     );
   });
 
-  it("test for all loaded", () => {
+  test("test for all loaded", () => {
     const startContext = { db: "nothing" };
     const loadedContext = { db: 1 };
 

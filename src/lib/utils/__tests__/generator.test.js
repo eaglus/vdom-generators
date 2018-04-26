@@ -11,7 +11,7 @@ describe("generator", () => {
 
   const promiseIds = [3, 4];
 
-  it("runPromisedGenerator", done => {
+  test("runPromisedGenerator", done => {
     const handler = command => {
       return promiseIds.includes(command.id)
         ? new Promise(resolve => setTimeout(resolve(command.id), 10))
@@ -25,7 +25,7 @@ describe("generator", () => {
     });
   });
 
-  it("runCallbackGenerator", done => {
+  test("runCallbackGenerator", done => {
     const handler = (command, callback) => {
       if (promiseIds.includes(command.id)) {
         callback(command.id);

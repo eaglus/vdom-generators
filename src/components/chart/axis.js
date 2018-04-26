@@ -76,7 +76,7 @@ export function drawXAxis(options) {
     y: tickTop
   }).date;
   const rangeStop = chartPointToDataPoint({
-    x: left + width - labelWidth,
+    x: left + width - labelWidth / 2,
     y: tickTop
   }).date;
 
