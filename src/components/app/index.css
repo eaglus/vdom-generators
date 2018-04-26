@@ -9,6 +9,12 @@
   justify-content: center;
 }
 
+.app-center-container {
+  flex-grow: 1;
+  overflow: hidden;
+  max-width: 1400px;
+}
+
 .app-header {
   font-size: x-large;
   margin-bottom: 5px;
@@ -19,8 +25,14 @@
 }
 
 .app-content-right {
+  flex-shrink: 0;
+}
+
+.app-content-right {
   position: relative;
-  width: 1100px;
+  flex-grow: 1;
+  flex-shrink: 1;
+  overflow: hidden;
   height: 700px;
   margin-left: 5px;
   display: flex;

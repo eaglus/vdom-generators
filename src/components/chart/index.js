@@ -5,6 +5,7 @@ import { Component } from "../../lib/vdom/component.js";
 
 import { drawXAxis, drawYAxis } from "./axis.js";
 import { restoreAfterRun } from "./utils.js";
+import { provideSize } from "../../lib/utils/component.js";
 
 const pClass = bemClassProps("chart");
 
@@ -22,20 +23,23 @@ const axisFontHeight = 12;
 
 const zoomStepFactor = 0.05;
 
-export class Chart extends Component {
-  constructor() {
+class ChartComponent extends Component {
+  constructor(props) {
     super();
+
+    this.prevData = props.data;
     this.updateElement = this.updateElement.bind(this);
     this.onMouseWheel = this.onMouseWheel.bind(this);
     this.onMouseDown = this.onMouseDown.bind(this);
-    this.state = {
-      width: "",
-      height: ""
-    };
   }
 
-  shouldComponentUpdate(nextProps, nextChildren, nextState) {
-    return nextProps.data !== this.props.data || nextState !== this.state;
+  shouldComponentUpdate(nextProps) {
+    const { data, width, height } = this.props;
+    return (
+      nextProps.data !== data ||
+      nextProps.width !== width ||
+      nextProps.height !== height
+    );
   }
 
   updateElement(element) {
@@ -52,19 +56,25 @@ export class Chart extends Component {
       this.context = null;
       this.restoreAfterRun = null;
     }
+    this.props.setNode(element);
   }
 
-  updateData() {
-    const { data } = this.props;
+  updateData(dataChanged) {
+    const { data, width, height } = this.props;
 
-    this.width = this.state.width - yAxisWidth - chartPadding * 2;
-    this.height = this.state.height - xAxisHeight - chartPadding * 2;
+    this.width = width - yAxisWidth - chartPadding * 2;
+    this.height = height - xAxisHeight - chartPadding * 2;
+
     this.topOffset = chartPadding;
     this.leftOffset = chartPadding;
 
+    const prevZoomXRange = this.zoomXRange;
+
     if (data.length) {
+      this.zoomXRange = undefined;
+
       this.xRange = [data[0].date, last(data).date];
-      this.setZoomXRange(this.xRange);
+      this.setZoomXRange(dataChanged ? this.xRange : prevZoomXRange);
     } else {
       this.clear();
     }
@@ -146,7 +156,7 @@ export class Chart extends Component {
     const bcr = this.canvas.getBoundingClientRect();
     return {
       x: screenX - bcr.left,
-      y: screenX - bcr.top
+      y: screenY - bcr.top
     };
   }
 
@@ -210,19 +220,17 @@ export class Chart extends Component {
     document.addEventListener("mouseup", mouseUp, true);
   }
 
-  componentDidMount() {
-    this.setState({
-      width: this.canvas.offsetWidth,
-      height: this.canvas.offsetHeight
-    });
-  }
-
   componentDidUpdate() {
-    this.updateData();
+    const { data } = this.props;
+    const dataChanged = this.prevData !== data;
+
+    this.prevData = data;
+
+    this.updateData(dataChanged);
   }
 
   clear() {
-    this.context.clearRect(0, 0, this.state.width, this.state.height);
+    this.context.clearRect(0, 0, this.props.width, this.props.height);
   }
 
   draw() {
@@ -288,8 +296,8 @@ export class Chart extends Component {
   render() {
     return h("canvas", {
       ...pClass("root"),
-      width: this.state.width,
-      height: this.state.height,
+      width: this.props.width,
+      height: this.props.height,
       onMount: this.updateElement,
       onUnmount: this.updateElement,
       onWheel: this.onMouseWheel,
@@ -297,3 +305,5 @@ export class Chart extends Component {
     });
   }
 }
+
+export const Chart = provideSize(ChartComponent);

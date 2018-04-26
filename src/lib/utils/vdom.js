@@ -1,4 +1,4 @@
-import { isEmptyObject, ensureArray } from './index.js';
+import { emptyObject, ensureArray } from "./index.js";
 
 export function isTextNode(vNode) {
   return vNode.text !== undefined;
