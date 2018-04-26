@@ -44,16 +44,15 @@ export function splitDate(date) {
 }
 
 export const alignToMonths = monthCnt => date => {
-  const [year, month, day] = splitDate(date);
+  const [year, month] = splitDate(date);
+  const startMonth = new Date(year, month);
 
-  let monthAligned = month;
-  let aligned = date;
-  if (month % monthCnt !== 0 || day > 1) {
-    monthAligned = month - month % monthCnt + monthCnt;
-    aligned = new Date(year, monthAligned, 1);
+  if (month % monthCnt !== 0 || date > startMonth) {
+    const monthAligned = month - month % monthCnt + monthCnt;
+    return new Date(year, monthAligned, 1);
   }
 
-  return aligned;
+  return date;
 };
 
 export const nextMonths = months => date => {
@@ -71,13 +70,14 @@ export function getDaysInMonth(date) {
 }
 
 export const alignToDays = dayCnt => date => {
-  const [year, month, day, hour] = splitDate(date);
+  const [year, month, day] = splitDate(date);
+  const startDay = new Date(year, month, day);
 
-  let dayAligned = day;
-  if (day % dayCnt !== 0 || hour > 0) {
-    dayAligned = day - day % dayCnt + dayCnt;
+  if (day % dayCnt !== 0 || date > startDay) {
+    const dayAligned = day - day % dayCnt + dayCnt;
+    return new Date(year, month, dayAligned);
   }
-  return new Date(year, month, dayAligned);
+  return date;
 };
 
 export const nextDays = days => date => {
@@ -107,13 +107,14 @@ export function nextWeek(date) {
 }
 
 export const alignToHours = hourCnt => date => {
-  const [year, month, day, hour, minute] = splitDate(date);
+  const [year, month, day, hour] = splitDate(date);
+  const startHour = new Date(year, month, day, hour);
 
-  let hourAligned = hour;
-  if (hour % hourCnt !== 0 || hour > minute) {
-    hourAligned = hour - hour % hourCnt + hourCnt;
+  if (hour % hourCnt !== 0 || date > startHour) {
+    const hourAligned = hour - hour % hourCnt + hourCnt;
+    return new Date(year, month, day, hourAligned);
   }
-  return new Date(year, month, day, hourAligned);
+  return date;
 };
 
 export function alignToInterval(date, interval) {
@@ -122,8 +123,7 @@ export function alignToInterval(date, interval) {
 }
 
 export function nextByInterval(date, interval) {
-  const dateNum = interval + Math.ceil(Number(date) / interval) * interval;
-  return new Date(dateNum);
+  return new Date(Number(date) + interval);
 }
 
 export const alignToYears = years => date => {
