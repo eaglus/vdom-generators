@@ -22,10 +22,33 @@ import {
   alignToHours
 } from "../../lib/utils/date.js";
 
+const zeroPadding = digits => number => {
+  return String(number).padStart(digits, "0");
+};
+
+const zeroPadding2 = zeroPadding(2);
+
 function firstChangedPartIdx(date, prevDate) {
   const split = splitDate(date);
   const prevSplit = splitDate(prevDate);
   return split.findIndex((part, i) => part !== prevSplit[i]);
+}
+
+function monthToName(month) {
+  return [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec"
+  ][month];
 }
 
 const formatTime = withSeconds => (date, prevDate) => {
@@ -33,27 +56,38 @@ const formatTime = withSeconds => (date, prevDate) => {
   const [year, month, day, hour, minute, second] = splitDate(date);
 
   const timeParts = withSeconds ? [hour, minute, second] : [hour, minute];
-  const timeStr = timeParts.join(":");
+  const timeStr = timeParts.map(zeroPadding2).join(":");
 
   if (date === prevDate || changeStart < 3) {
-    const dateStr = `${year} ${month} ${day}`;
+    const dateStr = `${monthToName(month)} ${day}, ${year}`;
     return [timeStr, dateStr];
   } else {
     return [timeStr];
   }
 };
 
-function formatDate(date, prevDate) {
-  const changeStart = firstChangedPartIdx(date, prevDate);
+const formatDate = withDays => (date, prevDate) => {
   const [year, month, day] = splitDate(date);
+  const [prevYear, prevMonth] = splitDate(prevDate);
 
-  const dateStr = `${month + 1}.${day}`;
+  const monthStr = monthToName(month);
+  const datePart = [];
+  if (withDays) {
+    if (date === prevDate || prevMonth !== month) {
+      datePart.push(monthStr);
+    }
+    datePart.push(day);
+  } else {
+    datePart.push(monthStr);
+  }
+  const dateStr = datePart.join(" ");
   const result = [dateStr];
-  if (date === prevDate || changeStart < 1) {
+
+  if (date === prevDate || year !== prevYear) {
     result.push(String(year));
   }
   return result;
-}
+};
 
 function formatYear(date) {
   return [String(date.getFullYear())];
@@ -102,13 +136,18 @@ export function makeDateTimeTicks(range, ticksCount) {
     [3 * durationHour, alignToHours(3), nextByInterval, formatTime(false)],
     [6 * durationHour, alignToHours(6), nextByInterval, formatTime(false)],
     [12 * durationHour, alignToHours(12), nextByInterval, formatTime(false)],
-    [durationDay, alignToDays(1), nextDays(1), formatDate],
-    [2 * durationDay, alignToDays(2), nextDays(2), formatDate],
-    [durationWeek, alignToWeek, nextWeek, formatDate],
-    [durationWeek * 2, alignToWeek, compose(nextWeek, nextWeek), formatDate],
-    [durationMonth, alignToMonths(1), nextMonths(1), formatDate],
-    [3 * durationMonth, alignToMonths(3), nextMonths(3), formatDate],
-    [6 * durationMonth, alignToMonths(6), nextMonths(6), formatDate],
+    [durationDay, alignToDays(1), nextDays(1), formatDate(true)],
+    [2 * durationDay, alignToDays(2), nextDays(2), formatDate(true)],
+    [durationWeek, alignToWeek, nextWeek, formatDate(true)],
+    [
+      durationWeek * 2,
+      alignToWeek,
+      compose(nextWeek, nextWeek),
+      formatDate(true)
+    ],
+    [durationMonth, alignToMonths(1), nextMonths(1), formatDate(false)],
+    [3 * durationMonth, alignToMonths(3), nextMonths(3), formatDate(false)],
+    [6 * durationMonth, alignToMonths(6), nextMonths(6), formatDate(false)],
     durationYear
   ];
 

@@ -93,7 +93,12 @@ export function drawXAxis(options) {
 
     context.fillText(labels[0], x, tickTop, labelWidth);
     if (labels[1]) {
-      context.fillText(labels[1], x, tickTop + fontHeight * 1.25, labelWidth);
+      context.fillText(
+        labels[1],
+        x,
+        tickTop + fontHeight * 1.25,
+        labelWidth * 1.25
+      );
     }
     context.moveTo(x, tickTop - tickLineLength - tickLinePadding);
     context.lineTo(x, tickTop - tickLinePadding);
