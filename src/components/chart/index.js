@@ -170,8 +170,11 @@ class ChartComponent extends Component {
   }
 
   onMouseWheel(e) {
-    const { wheelDelta } = e;
-    const zoomDir = wheelDelta > 0 ? 1 : -1;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const { deltaY } = e;
+    const zoomDir = deltaY > 0 ? -1 : 1;
     const { x } = this.screenToClient(e);
 
     if (x > this.leftOffset && x < this.leftOffset + this.width) {

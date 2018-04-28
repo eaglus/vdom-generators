@@ -27,25 +27,13 @@ http
     }
 
     const extname = path.extname(filePath);
-    let contentType = "text/html";
+    let contentType = "text/html;charset=utf-8";
     switch (extname) {
       case ".js":
-        contentType = "text/javascript";
+        contentType = "application/javascript;charset=utf-8";
         break;
       case ".css":
-        contentType = "text/css";
-        break;
-      case ".json":
-        contentType = "application/json";
-        break;
-      case ".png":
-        contentType = "image/png";
-        break;
-      case ".jpg":
-        contentType = "image/jpg";
-        break;
-      case ".wav":
-        contentType = "audio/wav";
+        contentType = "text/css;charset=utf-8";
         break;
     }
 
