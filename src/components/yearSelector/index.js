@@ -13,6 +13,7 @@ export class YearSelector extends Component {
       open: false,
       pageStart: this.getPageStart(props)
     };
+    this.prevValue = props.value;
 
     this.escapeHandler = this.escapeHandler.bind(this);
     this.clickOutsideHandler = this.clickOutsideHandler.bind(this);
@@ -30,11 +31,15 @@ export class YearSelector extends Component {
   }
 
   componentDidUpdate() {
-    const pageStart = this.getPageStart(this.props);
-    if (pageStart !== this.state.pageStart) {
-      this.setState({
-        pageStart
-      });
+    if (this.props.value !== this.prevValue) {
+      this.prevValue = this.props.value;
+
+      const pageStart = this.getPageStart(this.props);
+      if (pageStart !== this.state.pageStart) {
+        this.setState({
+          pageStart
+        });
+      }
     }
   }
 
@@ -174,15 +179,23 @@ export class YearSelector extends Component {
     const backClick = backEnabled
       ? {
           onMouseDown: event => {
-            return onSelect(Math.max(value - pageSize, min));
+            event.preventDefault();
+            const pageStart = Math.max(this.state.pageStart - pageSize, min);
+            this.setState({
+              pageStart
+            });
           }
         }
       : {};
 
     const forwardClick = forwardEnabled
       ? {
-          onMouseDown: () => {
-            return onSelect(Math.min(value + pageSize, max));
+          onMouseDown: event => {
+            event.preventDefault();
+            const pageStart = Math.min(this.state.pageStart + pageSize, max);
+            this.setState({
+              pageStart
+            });
           }
         }
       : {};

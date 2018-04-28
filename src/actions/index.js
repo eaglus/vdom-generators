@@ -29,7 +29,10 @@ export const dataLoadFail = actionCreator("DATA_LOAD_FAIL");
 function runLoadAction(actionFn) {
   return payload => {
     return (dispatch, getState) => {
-      dispatch(actionFn(payload));
+      const action = actionFn(payload);
+      if (action) {
+        dispatch(action);
+      }
 
       const { filter, chartData } = getState();
       const { activeFilterType } = filter;
@@ -55,3 +58,4 @@ function runLoadAction(actionFn) {
 export const loadForFilterType = runLoadAction(setActiveFilterType);
 export const loadForFilterFrom = runLoadAction(setActiveFilterFrom);
 export const loadForFilterTo = runLoadAction(setActiveFilterTo);
+export const loadForCurrentFilter = runLoadAction(() => undefined);

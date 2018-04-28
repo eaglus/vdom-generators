@@ -6,6 +6,7 @@ import { Component } from "../../lib/vdom/component.js";
 import { drawXAxis, drawYAxis } from "./axis.js";
 import { restoreAfterRun } from "./utils.js";
 import { provideSize } from "../../lib/utils/component.js";
+import { drawSeries } from "./series.js";
 
 const pClass = bemClassProps("chart");
 
@@ -118,12 +119,12 @@ class ChartComponent extends Component {
       this.dataPointToChartPoint = p => ({
         x:
           p.date !== undefined
-            ? this.leftOffset + Math.round(p.date * this.xFactor + this.xAdd)
+            ? this.leftOffset + Math.floor(p.date * this.xFactor + this.xAdd)
             : undefined,
         y:
           p.value !== undefined
             ? this.topOffset +
-              Math.round(this.height - (p.value * this.yFactor + this.yAdd))
+              Math.floor(this.height - (p.value * this.yFactor + this.yAdd))
             : undefined
       });
 
@@ -267,29 +268,20 @@ class ChartComponent extends Component {
   }
 
   drawSeries() {
-    const ctx = this.context;
-
-    ctx.beginPath();
-    ctx.rect(this.leftOffset, this.topOffset, this.width, this.height);
-    ctx.clip();
-
-    const data = this.zoomedData;
-    const ln = data.length;
-    if (data.length) {
-      let prevP = this.dataPointToChartPoint(data[0]);
-      ctx.moveTo(prevP.x, prevP.y);
-
+    if (this.zoomedData.length) {
+      const ctx = this.context;
       ctx.beginPath();
-      ctx.strokeStyle = lineColor;
+      ctx.rect(this.leftOffset, this.topOffset, this.width, this.height);
+      ctx.clip();
 
-      for (let i = 1; i !== ln; i++) {
-        const p = this.dataPointToChartPoint(data[i]);
-        if (p.x - prevP.x > 0) {
-          prevP = p;
-          ctx.lineTo(p.x, p.y);
-        }
-      }
-      ctx.stroke();
+      drawSeries({
+        data: this.zoomedData,
+        context: this.context,
+        dataPointToChartPoint: this.dataPointToChartPoint,
+        chartPointToDataPoint: this.chartPointToDataPoint,
+        groupSize: 2,
+        lineColor
+      });
     }
   }
 
