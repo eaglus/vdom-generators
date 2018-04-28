@@ -1,4 +1,5 @@
 import { h } from "../../lib/vdom/h.js";
+import { merge } from "../../lib/utils/index.js";
 import { bemClassProps } from "../../lib/utils/vdom.js";
 import { Chart } from "../chart/index.js";
 import { Filter } from "../filter/index.js";
@@ -13,10 +14,10 @@ export function ChartContainer(props) {
     h(
       "div",
       pClass("filter-row"),
-      h(Filter, { ...activeFilter, minYear, maxYear })
+      h(Filter, merge(activeFilter, { minYear, maxYear }))
     ),
     h("div", pClass("chart"), [
-      h(Chart, { ...chartData }),
+      h(Chart, chartData),
       chartData.isLoading ? h(Loader, {}) : null
     ])
   ];

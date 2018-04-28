@@ -15,6 +15,7 @@ import {
   emptyObject,
   emptyArray,
   omit,
+  merge,
   assert
 } from "../../utils/index.js";
 import {
@@ -39,8 +40,8 @@ function getDocumentEnv() {
 }
 
 function getDomEvents(events) {
-  const { mount, unmount, ...domEvents } = events || emptyObject;
-  return domEvents;
+  const domEvents = omit(events, ["mount", "unmount"]);
+  return domEvents || emptyObject;
 }
 
 function getTopElements(context) {
@@ -70,12 +71,11 @@ function updateRootContext(rootContext, addEvents, removeEvents, queueAction) {
       const eventCnt = events[eventName];
 
       if (eventCnt > 1) {
-        events = {
-          ...events,
+        events = merge(events, {
           [eventName]: eventCnt - 1
-        };
+        });
       } else {
-        events = omit(events, eventName);
+        events = omit(events, [eventName]);
       }
     }
   }
@@ -84,20 +84,18 @@ function updateRootContext(rootContext, addEvents, removeEvents, queueAction) {
     for (let eventName of addEventNames) {
       const eventCnt = events && events[eventName];
       events = events
-        ? {
-            ...events,
+        ? merge(events, {
             [eventName]: eventCnt ? eventCnt + 1 : 1
-          }
+          })
         : { [eventName]: 1 };
     }
   }
 
   if (events !== rootContext.events || queue !== rootContext.queue) {
-    return {
-      ...rootContext,
+    return merge(rootContext, {
       events,
       queue
-    };
+    });
   } else {
     return rootContext;
   }
@@ -121,7 +119,7 @@ function updateContextById(context, id, rootContext, mutable) {
   }
 
   const contextById = rootContext.contextById || emptyObject;
-  const newContextById = mutable ? contextById : { ...contextById };
+  const newContextById = mutable ? contextById : merge({}, contextById);
   if (context) {
     newContextById[id] = context;
   } else {
@@ -130,10 +128,9 @@ function updateContextById(context, id, rootContext, mutable) {
   if (mutable) {
     rootContext.contextById = newContextById;
   } else {
-    return {
-      ...rootContext,
+    return merge(rootContext, {
       contextById: newContextById
-    };
+    });
   }
 }
 
@@ -145,10 +142,7 @@ function setInstanceProps(newContext, requestUpdate) {
   const { instance } = newContext;
   if (instance) {
     instance.setState = state => {
-      instance.nextState = {
-        ...instance.state,
-        ...state
-      };
+      instance.nextState = merge(instance.state, state);
       requestUpdate(newContext);
     };
   }
@@ -183,21 +177,21 @@ function handleAppend(command, rootContext) {
   const fragment = isAppendRoot ? document.createDocumentFragment() : null;
 
   if (fragment) {
-    fragment.append(element);
+    fragment.appendChild(element);
   } else if (insertContext) {
     const { element: prevSibling } = insertContext;
     if (prevSibling === "prepend") {
       if (parentElement.firstChild) {
         parentElement.insertBefore(element, parentElement.firstChild);
       } else {
-        parentElement.append(element);
+        parentElement.appendChild(element);
       }
     } else {
       parentElement.insertBefore(element, prevSibling);
       parentElement.insertBefore(prevSibling, element);
     }
   } else {
-    parentElement.append(element);
+    parentElement.appendChild(element);
   }
 
   if (isText) {
@@ -275,7 +269,7 @@ function handleAppendClose(command, rootContext) {
         if (parentElement.firstChild) {
           parentElement.insertBefore(fragment, parentElement.firstChild);
         } else {
-          parentElement.append(fragment);
+          parentElement.appendChild(fragment);
         }
       } else {
         const first = fragment.firstChild;
@@ -285,7 +279,7 @@ function handleAppendClose(command, rootContext) {
         }
       }
     } else {
-      parentElement.append(fragment);
+      parentElement.appendChild(fragment);
     }
   }
 
@@ -510,11 +504,10 @@ export function applyDiff(
   rootContext,
   dispatch
 ) {
-  rootContext = {
-    ...rootContext,
+  rootContext = merge(rootContext, {
     dispatch,
     env: getDocumentEnv()
-  };
+  });
 
   const commands = diff(newVNode, oldContext, parentContext);
 
@@ -602,9 +595,7 @@ export function makeUpdater(rootElement, dispatch) {
 
   const requestUpdate = innerContext => {
     const { vNode } = innerContext;
-    const newVNode = {
-      ...vNode
-    };
+    const newVNode = merge({}, vNode);
 
     const oldInnerContext = innerContext;
     assert(getContextById(oldInnerContext.id, rootContext) === oldInnerContext);
@@ -623,7 +614,7 @@ export function makeUpdater(rootElement, dispatch) {
     updateParent(innerContext, oldInnerContext, rootContext);
 
     const queue = rootContext.queue;
-    rootContext = omit(rootContext, "queue");
+    rootContext = omit(rootContext, ["queue"]);
     execQueue(queue, dispatch);
   };
 
@@ -640,7 +631,7 @@ export function makeUpdater(rootElement, dispatch) {
     ));
 
     const queue = rootContext.queue;
-    rootContext = omit(rootContext, "queue");
+    rootContext = omit(rootContext, ["queue"]);
     execQueue(queue, dispatch);
   };
 }

@@ -1,4 +1,5 @@
 import { h } from "../../lib/vdom/h.js";
+import { merge } from "../../lib/utils/index.js";
 import { bemClassProps } from "../../lib/utils/vdom.js";
 import { lowerBound, upperBound, last } from "../../lib/utils/index.js";
 import { Component } from "../../lib/vdom/component.js";
@@ -251,22 +252,24 @@ class ChartComponent extends Component {
         color: axisColor
       };
 
-      this.drawFunctions.drawYAxis({
-        ...axisOptions,
-        left: this.leftOffset + this.width + chartPadding,
-        top: this.topOffset,
-        width: yAxisWidth - chartPadding,
-        height: this.height
-      });
+      this.drawFunctions.drawYAxis(
+        merge(axisOptions, {
+          left: this.leftOffset + this.width + chartPadding,
+          top: this.topOffset,
+          width: yAxisWidth - chartPadding,
+          height: this.height
+        })
+      );
 
-      this.drawFunctions.drawXAxis({
-        ...axisOptions,
-        left: this.leftOffset,
-        top: this.topOffset + this.height + chartPadding,
-        width: this.width,
-        fontHeight: axisFontHeight,
-        labelWidth: xAxisLabelWidth
-      });
+      this.drawFunctions.drawXAxis(
+        merge(axisOptions, {
+          left: this.leftOffset,
+          top: this.topOffset + this.height + chartPadding,
+          width: this.width,
+          fontHeight: axisFontHeight,
+          labelWidth: xAxisLabelWidth
+        })
+      );
     });
   }
 
@@ -289,15 +292,17 @@ class ChartComponent extends Component {
   }
 
   render() {
-    return h("canvas", {
-      ...pClass("root"),
-      width: this.props.width,
-      height: this.props.height,
-      onMount: this.updateElement,
-      onUnmount: this.updateElement,
-      onWheel: this.onMouseWheel,
-      onMouseDown: this.onMouseDown
-    });
+    return h(
+      "canvas",
+      merge(pClass("root"), {
+        width: this.props.width,
+        height: this.props.height,
+        onMount: this.updateElement,
+        onUnmount: this.updateElement,
+        onWheel: this.onMouseWheel,
+        onMouseDown: this.onMouseDown
+      })
+    );
   }
 }
 

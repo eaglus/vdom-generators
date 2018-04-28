@@ -1,20 +1,21 @@
 import { emptyObject, ensureArray } from "../utils/index.js";
 
-const emptyNormProps = env => emptyObject;
+const emptyNormProps = () => emptyObject;
 
 function isStringOrNumber(v) {
   return typeof v === "string" || typeof v === "number";
 }
 
 function isValidTag(tagOrComponent) {
-  return typeof tagOrComponent !== 'string' || typeof tagOrComponent !== 'function';
+  return (
+    typeof tagOrComponent !== "string" || typeof tagOrComponent !== "function"
+  );
 }
 export function h(tagOrComponent, props, children) {
   const argsLn = arguments.length;
   if (argsLn === 1 && !tagOrComponent) {
     return false;
-  }
-  else if ((argsLn === 2 || argsLn === 3) && isValidTag(tagOrComponent)) {
+  } else if ((argsLn === 2 || argsLn === 3) && isValidTag(tagOrComponent)) {
     if (argsLn === 2) {
       if (Array.isArray(props) || isStringOrNumber(props)) {
         children = props;
@@ -24,8 +25,8 @@ export function h(tagOrComponent, props, children) {
       }
     }
 
-    if (typeof props !== 'object') {
-      throw new Error('Bad node');
+    if (typeof props !== "object") {
+      throw new Error("Bad node");
     }
 
     if (isStringOrNumber(children)) {
@@ -55,6 +56,6 @@ export function h(tagOrComponent, props, children) {
       isComponent
     };
   } else {
-    throw new Error('Bad node');
+    throw new Error("Bad node");
   }
 }

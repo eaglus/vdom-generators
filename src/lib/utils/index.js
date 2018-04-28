@@ -1,6 +1,13 @@
 export const emptyObject = {};
 export const emptyArray = [];
 
+export function merge() {
+  const args = Array.prototype.slice.call(arguments);
+  args.unshift({});
+
+  return Object.assign.apply(undefined, args);
+}
+
 export function assert(condition, message) {
   if (!condition) {
     throw new Error(message);
@@ -19,14 +26,13 @@ export function isEmptyObject(obj) {
   return !obj || Object.keys(obj).length === 0;
 }
 
-export function omit(obj, key) {
-  const keys = Object.keys(obj).filter(k => k !== key);
-  return keys.reduce((res, k) => {
-    return {
-      ...res,
-      [k]: obj[k]
-    };
-  }, {});
+export function omit(obj, omitKeys) {
+  if (obj) {
+    const keys = Object.keys(obj).filter(k => !omitKeys.includes(k));
+    return keys.reduce((res, k) => merge(res, { [k]: obj[k] }), {});
+  } else {
+    return obj;
+  }
 }
 
 export function diffProps(oldProps, newProps) {

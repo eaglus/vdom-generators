@@ -11,6 +11,7 @@ import {
 import { isStatefulComponent } from "../component.js";
 import { ensureArray, emptyObject, emptyArray } from "../../utils/index.js";
 import { isTextNode } from "../../utils/vdom.js";
+import { merge } from "../../utils/index.js";
 
 function normalizeRendered(rendered) {
   if (!rendered) {
@@ -156,10 +157,9 @@ export function* diff(newVNode, context, parentContext) {
       let newChildren;
       if (isTextNode(vNode)) {
         if (vNode.text !== newVNode.text) {
-          const updatedContext = {
-            ...context,
+          const updatedContext = merge(context, {
             vNode: newVNode
-          };
+          });
           yield new UpdateNode(updatedContext, context);
           return updatedContext;
         } else {
@@ -217,16 +217,14 @@ export function* diff(newVNode, context, parentContext) {
           newChildContexts.push(updatedChildContext);
         }
 
-        updatedContext = {
-          ...context,
+        updatedContext = merge(context, {
           vNode: newVNode,
           childContexts: newChildContexts
-        };
+        });
       } else {
-        updatedContext = {
-          ...context,
+        updatedContext = merge(context, {
           vNode: newVNode
-        };
+        });
       }
       if (vNode.isComponent) {
         yield new UpdateComponent(updatedContext, childrenChanged);

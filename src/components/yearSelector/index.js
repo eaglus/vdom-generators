@@ -1,4 +1,5 @@
 import { h } from "../../lib/vdom/h.js";
+import { merge } from "../../lib/utils/index.js";
 import { bemClassProps } from "../../lib/utils/vdom.js";
 import { Component } from "../../lib/vdom/component.js";
 
@@ -140,16 +141,7 @@ export class YearSelector extends Component {
         mods.push("forward");
       }
 
-      cells.push(
-        h(
-          "div",
-          {
-            ...events,
-            ...pClass("cell", mods)
-          },
-          year
-        )
-      );
+      cells.push(h("div", merge(events, pClass("cell", mods)), year));
     }
     return h("div", pClass("row"), cells);
   }
@@ -201,27 +193,13 @@ export class YearSelector extends Component {
       : {};
 
     return h("div", pClass("top-row"), [
-      h(
-        "div",
-        {
-          ...pClass("top-row-back", backMods),
-          ...backClick
-        },
-        "«"
-      ),
+      h("div", merge(pClass("top-row-back", backMods), backClick), "«"),
       h(
         "div",
         pClass("top-row-middle"),
         pageStart + "-" + (pageStart + pageSize)
       ),
-      h(
-        "div",
-        {
-          ...pClass("top-row-forward", forwardMods),
-          ...forwardClick
-        },
-        "»"
-      )
+      h("div", merge(pClass("top-row-forward", forwardMods), forwardClick), "»")
     ]);
   }
 
@@ -231,22 +209,20 @@ export class YearSelector extends Component {
     const openMod = isOpened ? "open" : "";
     return h(
       "div",
-      {
-        ...pClass("root"),
+      merge(pClass("root"), {
         onMount: element => this.updateRootElement(element),
         onUnmount: () => this.updateRootElement(null)
-      },
+      }),
       [
         h(
           "div",
-          {
-            ...pClass("opener", openMod),
+          merge(pClass("opener", openMod), {
             onMouseDown: event => {
               event.preventDefault();
               event.stopPropagation();
               this.onToggle();
             }
-          },
+          }),
           value
         ),
         isOpened &&

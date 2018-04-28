@@ -1,5 +1,6 @@
 import { Component } from "../vdom/component.js";
 import { h } from "../vdom/h.js";
+import { merge } from "../utils/index.js";
 
 export function provideSize(component) {
   class Provider extends Component {
@@ -35,12 +36,14 @@ export function provideSize(component) {
     }
 
     render() {
-      return h(component, {
-        ...this.props,
-        width: this.state.width,
-        height: this.state.height,
-        setNode: this.setNode
-      });
+      return h(
+        component,
+        merge(this.props, {
+          width: this.state.width,
+          height: this.state.height,
+          setNode: this.setNode
+        })
+      );
     }
   }
 

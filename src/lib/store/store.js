@@ -1,4 +1,5 @@
 import { initAction } from "./actions.js";
+import { merge } from "../utils/index.js";
 
 export function combineReducers(reducers) {
   return (action, state) => {
@@ -6,10 +7,9 @@ export function combineReducers(reducers) {
       const oldPart = state && state[key];
       const newPart = reducers[key](action, oldPart);
       if (newPart !== oldPart) {
-        state = {
-          ...state,
+        state = merge(state, {
           [key]: newPart
-        };
+        });
       }
     }
     return state;

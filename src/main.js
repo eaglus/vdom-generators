@@ -1,6 +1,7 @@
 import { h } from "./lib/vdom/h.js";
 import { makeStore, combineReducers } from "./lib/store/store.js";
 import { loadForCurrentFilter } from "./actions/index.js";
+
 import { makeUpdater } from "./lib/vdom/interpreters/documentInterpeter.js";
 import { filterReducer } from "./reducers/filters.js";
 import { chartDataReducer } from "./reducers/chartData.js";
@@ -15,10 +16,7 @@ function main() {
   const rootElement = document.getElementById("root");
 
   const onUpdate = state => {
-    const props = {
-      ...state
-    };
-    updater(h(App, { ...props }));
+    updater(h(App, state));
   };
 
   const store = makeStore(reducer, onUpdate);
