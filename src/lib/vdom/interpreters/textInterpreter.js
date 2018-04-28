@@ -20,16 +20,6 @@ function getTextEnv() {
   };
 }
 
-function handleAppendComponent(command, rootContext) {
-  const { newVNode, instance } = command;
-  const context = {
-    vNode: newVNode,
-    instance
-  };
-
-  return context;
-}
-
 export function buildText(newVNode) {
   const env = getTextEnv();
   const commands = diff(newVNode, {}, {});
@@ -75,7 +65,11 @@ export function buildText(newVNode) {
         childContexts
       };
     } else if (command instanceof AppendComponent) {
-      currentContext = handleAppendComponent(command);
+      const { newVNode, instance } = command;
+      currentContext = {
+        vNode: newVNode,
+        instance
+      };
     } else {
       throw new Error("Bad command for buildText");
     }
