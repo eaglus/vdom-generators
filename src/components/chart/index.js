@@ -100,13 +100,18 @@ class ChartComponent extends Component {
       this.zoomedData = data.slice(zoomIndexL, zoomIndexR);
 
       if (this.zoomedData.length) {
-        this.yRange = this.zoomedData.reduce(
-          (range, { value }) => [
-            Math.min(value, range[0]),
-            Math.max(value, range[1])
-          ],
-          [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]
-        );
+        let min = Number.POSITIVE_INFINITY;
+        let max = Number.NEGATIVE_INFINITY;
+        let length = this.zoomedData.length;
+        for (let i = 0; i !== length; i++) {
+          const { value } = this.zoomedData[i];
+          if (value < min) {
+            min = value;
+          } else if (value > max) {
+            max = value;
+          }
+        }
+        this.yRange = [min, max];
       } else {
         this.yRange = [];
       }

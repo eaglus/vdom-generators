@@ -1,55 +1,42 @@
-import { compose } from "../../lib/utils/index.js";
-
-const pointsAreClose = diff => (p1, p2) => {
-  return p2.date - p1.date < diff;
-};
-
 export function groupDataByWindow({ data, groupSize, groupMapper }) {
   const dataLength = data.length;
   if (dataLength < 2) {
     return [];
   }
 
-  const sameGroup = pointsAreClose(groupSize);
-
   const result = [];
   let prevPoint = data[0];
-  let currentGroup = [prevPoint];
+  let currentGroup = {
+    date: prevPoint.date,
+    min: prevPoint.value,
+    max: prevPoint.value
+  };
 
+  let point;
   for (let i = 1; i !== dataLength; i++) {
-    const point = data[i];
-    if (sameGroup(prevPoint, point)) {
-      currentGroup.push(point);
+    point = data[i];
+    const { date, value } = point;
+
+    if (date - prevPoint.date < groupSize) {
+      if (currentGroup.min > value) {
+        currentGroup.min = value;
+      } else if (currentGroup.max < value) {
+        currentGroup.max = value;
+      }
     } else {
-      prevPoint = point;
       result.push(groupMapper(currentGroup));
-      currentGroup = [prevPoint];
+      currentGroup.date = date;
+      currentGroup.min = value;
+      currentGroup.max = value;
+      prevPoint = point;
     }
   }
 
-  if (currentGroup.length) {
+  if (prevPoint !== point) {
     result.push(groupMapper(currentGroup));
   }
 
   return result;
-}
-
-function groupToValueMinMax(group) {
-  let max = Number.NEGATIVE_INFINITY;
-  let min = Number.POSITIVE_INFINITY;
-
-  const length = group.length;
-  for (let i = 0; i !== length; i++) {
-    const value = group[i].value;
-    max = Math.max(max, value);
-    min = Math.min(min, value);
-  }
-
-  return {
-    date: group[0].date,
-    min,
-    max
-  };
 }
 
 function groupSizeFromChartToDate({ chartPointToDataPoint, groupSize }) {
@@ -90,10 +77,7 @@ export function drawSeries(params) {
 
   console.time("drawSeries - group");
   const dataGroupSize = groupSizeFromChartToDate(params);
-  const groupMapper = compose(
-    valueMinMaxToPoints(dataPointToChartPoint),
-    groupToValueMinMax
-  );
+  const groupMapper = valueMinMaxToPoints(dataPointToChartPoint);
   const pairs = groupDataByWindow({
     data,
     groupSize: dataGroupSize,
