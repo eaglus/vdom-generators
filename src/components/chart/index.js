@@ -70,28 +70,29 @@ class ChartComponent extends Component {
     this.topOffset = chartPadding;
     this.leftOffset = chartPadding;
 
-    const prevZoomXRange = this.zoomXRange;
-
     if (data.length) {
-      this.zoomXRange = undefined;
-
       this.xRange = [data[0].date, last(data).date];
-      this.setZoomXRange(dataChanged ? this.xRange : prevZoomXRange);
+      this.setZoomXRange(
+        dataChanged ? this.xRange : this.zoomXRange,
+        dataChanged
+      );
+      this.draw(false);
     } else {
       this.clear();
     }
   }
 
-  setZoomXRange(range) {
+  setZoomXRange(range, dataChanged) {
+    const [xMin, xMax] = range;
     if (
-      !this.zoomXRange ||
-      range[0] !== this.zoomXRange[0] ||
-      range[1] !== this.zoomXRange[1]
+      dataChanged ||
+      range !== this.zoomXRange ||
+      xMin !== this.zoomXRange[0] ||
+      xMax !== this.zoomXRange[1]
     ) {
       this.zoomXRange = range;
 
       const { data } = this.props;
-      const [xMin, xMax] = this.zoomXRange;
 
       const zoomIndexL = lowerBound(data, { date: xMin }, dateComparer);
       const zoomIndexR = upperBound(data, { date: xMax }, dateComparer);
@@ -109,49 +110,51 @@ class ChartComponent extends Component {
       } else {
         this.yRange = [];
       }
-
-      const [yMin, yMax] = this.yRange;
-
-      this.xFactor = this.width / (xMax - xMin);
-      this.yFactor = this.height / (yMax - yMin);
-      this.xAdd = -xMin * this.xFactor;
-      this.yAdd = -yMin * this.yFactor;
-
-      this.dataPointToChartPoint = p => ({
-        x:
-          p.date !== undefined
-            ? this.leftOffset + Math.floor(p.date * this.xFactor + this.xAdd)
-            : undefined,
-        y:
-          p.value !== undefined
-            ? this.topOffset +
-              Math.floor(this.height - (p.value * this.yFactor + this.yAdd))
-            : undefined
-      });
-
-      this.chartPointToDataPoint = ({ x, y }) => {
-        let date;
-        if (x !== undefined) {
-          const dateDiff =
-            (x - this.leftOffset) / this.width * this.getZoomXRangeWidth();
-          date = xMin + dateDiff;
-        }
-
-        let value;
-        if (y !== undefined) {
-          const valueDiff =
-            (y - this.topOffset) / this.height * this.getZoomYRangeWidth();
-          value = yMin + valueDiff;
-        }
-
-        return {
-          date,
-          value
-        };
-      };
-
-      this.draw();
     }
+
+    const [yMin, yMax] = this.yRange;
+
+    this.xFactor = this.width / (xMax - xMin);
+    this.yFactor = this.height / (yMax - yMin);
+    this.xAdd = -xMin * this.xFactor;
+    this.yAdd = -yMin * this.yFactor;
+
+    this.zoomXRangeWidth = this.zoomXRange[1] - this.zoomXRange[0];
+    this.zoomYRangeWidth = this.yRange[1] - this.yRange[0];
+
+    this.dataPointToChartPoint = p => ({
+      x:
+        p.date !== undefined
+          ? this.leftOffset + Math.floor(p.date * this.xFactor + this.xAdd)
+          : undefined,
+      y:
+        p.value !== undefined
+          ? this.topOffset +
+            Math.floor(this.height - (p.value * this.yFactor + this.yAdd))
+          : undefined
+    });
+
+    const widthRatio = this.zoomXRangeWidth / this.width;
+    const heightRatio = this.zoomYRangeWidth / this.height;
+
+    this.chartPointToDataPoint = ({ x, y }) => {
+      let date;
+      if (x !== undefined) {
+        const dateDiff = (x - this.leftOffset) * widthRatio;
+        date = xMin + dateDiff;
+      }
+
+      let value;
+      if (y !== undefined) {
+        const valueDiff = (y - this.topOffset) * heightRatio;
+        value = yMin + valueDiff;
+      }
+
+      return {
+        date,
+        value
+      };
+    };
   }
 
   screenToClient({ screenX, screenY }) {
@@ -160,14 +163,6 @@ class ChartComponent extends Component {
       x: screenX - bcr.left,
       y: screenY - bcr.top
     };
-  }
-
-  getZoomXRangeWidth() {
-    return this.zoomXRange[1] - this.zoomXRange[0];
-  }
-
-  getZoomYRangeWidth() {
-    return this.yRange[1] - this.yRange[0];
   }
 
   onMouseWheel(e) {
@@ -180,7 +175,7 @@ class ChartComponent extends Component {
 
     if (x > this.leftOffset && x < this.leftOffset + this.width) {
       const xPosRatio = (x - this.leftOffset) / this.width;
-      const xRangeWidth = this.getZoomXRangeWidth();
+      const xRangeWidth = this.zoomXRangeWidth;
       const dxLeft = xPosRatio * xRangeWidth * zoomStepFactor * zoomDir;
       const dxRight = (1 - xPosRatio) * xRangeWidth * zoomStepFactor * zoomDir;
       const [rangeStart, rangeStop] = this.xRange;
@@ -189,6 +184,7 @@ class ChartComponent extends Component {
         Math.min(this.zoomXRange[1] - dxRight, rangeStop)
       ];
       this.setZoomXRange(newZoomRange);
+      this.draw(true);
     }
   }
 
@@ -214,6 +210,7 @@ class ChartComponent extends Component {
         this.zoomXRange[1] + diffFixed
       ];
       this.setZoomXRange(newZoomRange);
+      this.draw(true);
     };
 
     const mouseUp = () => {
@@ -238,8 +235,9 @@ class ChartComponent extends Component {
     this.context.clearRect(0, 0, this.props.width, this.props.height);
   }
 
-  draw() {
-    requestAnimationFrame(() => {
+  draw(withRaf) {
+    const doDraw = () => {
+      this.doDrawRequested = false;
       this.clear();
 
       this.drawFunctions.drawSeries();
@@ -270,7 +268,16 @@ class ChartComponent extends Component {
           labelWidth: xAxisLabelWidth
         })
       );
-    });
+    };
+
+    if (withRaf) {
+      if (!this.doDrawRequested) {
+        this.doDrawRequested = true;
+        requestAnimationFrame(doDraw);
+      }
+    } else {
+      doDraw();
+    }
   }
 
   drawSeries() {

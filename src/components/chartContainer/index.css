@@ -12,6 +12,8 @@
 
 .chart-container-chart {
   flex-grow: 1;
+  flex-shrink: 1;
+  overflow: hidden;
   border: thin solid #dfdfdf;
   display: flex;
   flex-direction: column;

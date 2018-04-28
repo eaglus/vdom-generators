@@ -4,24 +4,6 @@ const pointsAreClose = diff => (p1, p2) => {
   return p2.date - p1.date < diff;
 };
 
-function bisect(arr, fn) {
-  return arr.reduce(
-    (result, item) => {
-      const { left, right } = result;
-      if (fn(item)) {
-        right.push(item);
-      } else {
-        left.push(item);
-      }
-      return result;
-    },
-    {
-      left: [],
-      right: []
-    }
-  );
-}
-
 export function groupDataByWindow({ data, groupSize, groupMapper }) {
   const dataLength = data.length;
   if (dataLength < 2) {
@@ -53,15 +35,15 @@ export function groupDataByWindow({ data, groupSize, groupMapper }) {
 }
 
 function groupToValueMinMax(group) {
-  const max = group.reduce(
-    (result, point) => Math.max(result, point.value),
-    Number.NEGATIVE_INFINITY
-  );
+  let max = Number.NEGATIVE_INFINITY;
+  let min = Number.POSITIVE_INFINITY;
 
-  const min = group.reduce(
-    (result, point) => Math.min(result, point.value),
-    max
-  );
+  const length = group.length;
+  for (let i = 0; i !== length; i++) {
+    const value = group[i].value;
+    max = Math.max(max, value);
+    min = Math.min(min, value);
+  }
 
   return {
     date: group[0].date,
@@ -106,6 +88,7 @@ function pairsConnect(pair1, pair2) {
 export function drawSeries(params) {
   const { data, context, dataPointToChartPoint, lineColor } = params;
 
+  console.time("drawSeries - group");
   const dataGroupSize = groupSizeFromChartToDate(params);
   const groupMapper = compose(
     valueMinMaxToPoints(dataPointToChartPoint),
@@ -117,6 +100,8 @@ export function drawSeries(params) {
     groupMapper
   });
 
+  console.timeEnd("drawSeries - group");
+  console.time("drawSeries - draw");
   context.beginPath();
   context.strokeStyle = lineColor;
 
@@ -147,4 +132,5 @@ export function drawSeries(params) {
   });
 
   context.stroke();
+  console.timeEnd("drawSeries - draw");
 }
