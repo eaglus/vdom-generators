@@ -85,9 +85,9 @@ function updateRootContext(rootContext, addEvents, removeEvents, queueAction) {
       const eventCnt = events && events[eventName];
       events = events
         ? {
-          ...events,
-          [eventName]: eventCnt ? eventCnt + 1 : 1
-        }
+            ...events,
+            [eventName]: eventCnt ? eventCnt + 1 : 1
+          }
         : { [eventName]: 1 };
     }
   }
@@ -139,15 +139,6 @@ function updateContextById(context, id, rootContext, mutable) {
 
 function getContextById(id, rootContext) {
   return rootContext.contextById[id];
-}
-
-function cloneContextById(rootContext) {
-  return {
-    ...rootContext,
-    contextById: {
-      ...rootContext.contextById
-    }
-  };
 }
 
 function setInstanceProps(newContext, requestUpdate) {
@@ -587,26 +578,6 @@ function updateParent(innerContext, oldInnerContext, rootContext) {
   const idx = parentContext.childContexts.indexOf(oldInnerContext);
   assert(idx !== -1);
   parentContext.childContexts[idx] = innerContext;
-
-  // rootContext = cloneContextById(rootContext);
-  // while (parentId) {
-  //   const parentContext = rootContext.contextById[parentId];
-  //   const childContexts = parentContext.childContexts.map(
-  //     context => (context === oldInnerContext ? innerContext : context)
-  //   );
-
-  //   const newParentContext = {
-  //     ...parentContext,
-  //     childContexts
-  //   };
-  //   setInstanceProps(newParentContext, rootContext.requestUpdate);
-  //   updateContextById(newParentContext, parentId, rootContext, true);
-
-  //   oldInnerContext = parentContext;
-  //   innerContext = newParentContext;
-  //   parentId = oldInnerContext.parentId;
-  // }
-  // return { innerContext, rootContext };
 }
 
 function execQueue(queue, dispatch) {
