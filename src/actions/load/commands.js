@@ -1,5 +1,12 @@
 export class FindStartChunk {
-  //находим пачку с _верхней_ границе больше, чем date
+  constructor(date, collection, context) {
+    this.date = date;
+    this.collection = collection;
+    this.context = context;
+  }
+}
+
+export class FindUpperBoundDate {
   constructor(date, collection, context) {
     this.date = date;
     this.collection = collection;

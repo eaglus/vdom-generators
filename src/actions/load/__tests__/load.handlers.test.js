@@ -1,8 +1,12 @@
-import { IDBFactory, IDBKeyRange } from "shelving-mock-indexeddb";
+import { IDBFactory, IDBKeyRange, reset } from "shelving-mock-indexeddb";
 
 import { createCommandHandler, splitToMonths } from "../loadHandlers.js";
-import { FindStartChunk, FindNextChunk, LoadChunks } from "../commands.js";
-import { createLoader } from "../index.js";
+import {
+  FindStartChunk,
+  FindNextChunk,
+  LoadChunks,
+  FindUpperBoundDate
+} from "../commands.js";
 
 import { loadRange } from "./mockServerApi.js";
 
@@ -30,21 +34,25 @@ describe("helper functions", () => {
 });
 
 describe("loadHandlers", () => {
-  let handler;
-  let environment;
+  let environment = {
+    serverApi: {
+      loadRange
+    },
+    indexedDB: new IDBFactory(),
+    IDBKeyRange
+  };
+  let handler = createCommandHandler(environment);
+
   beforeEach(() => {
-    environment = {
-      serverApi: {
-        loadRange
-      },
-      indexedDB: new IDBFactory(),
-      IDBKeyRange
-    };
-    handler = createCommandHandler(environment);
+    reset();
   });
 
-  test("FindStartChunk", done => {
-    const res = handler(
+  afterEach(() => {
+    reset();
+  });
+
+  test("FindStartChunk for empty collection", done => {
+    handler(
       new FindStartChunk(100500, "temperature", {}),
       result => {
         const { chunk, context } = result;
@@ -52,6 +60,61 @@ describe("loadHandlers", () => {
         expect(context.db).toBeTruthy();
         done();
       },
+      done
+    );
+  });
+
+  test("FindUpperBoundDate for empty collection", done => {
+    handler(
+      new FindStartChunk(100500, "temperature", {}),
+      result => {
+        const { context } = result;
+        handler(
+          new FindUpperBoundDate(100500, "temperature", context),
+          result => {
+            expect(result).toBeUndefined();
+            done();
+          },
+          done
+        );
+      },
+      done
+    );
+  });
+
+  test("FindUpperBoundDate for non-empty collection", done => {
+    const loadedFrom = Date.UTC(2001, 2, 1);
+    const loadedTo = Date.UTC(2006, 11, 31);
+
+    const checkBefore = callback => context => {
+      handler(
+        new FindUpperBoundDate(Date.UTC(2000, 2, 1), "temperature", context),
+        result => {
+          expect(result).toBeUndefined(); //no data loaded before 2001 year
+          callback(context);
+        },
+        done
+      );
+    };
+
+    const checkAfter = callback => context => {
+      handler(
+        new FindUpperBoundDate(Date.UTC(2100, 2, 1), "temperature", context),
+        result => {
+          expect(result).toBe(loadedTo); //data end is..
+          callback(context);
+        },
+        done
+      );
+    };
+
+    handler(
+      new LoadChunks(loadedFrom, loadedTo, "temperature"),
+      checkBefore(
+        checkAfter(() => {
+          done();
+        })
+      ),
       done
     );
   });
@@ -119,17 +182,5 @@ describe("loadHandlers", () => {
         done
       );
     });
-  });
-
-  test("Full load", done => {
-    const loader = createLoader(environment);
-    const dateFrom = Date.UTC(2001, 2, 5);
-    const dateTo = Date.UTC(2001, 8, 15);
-    return loader(dateFrom, dateTo, "temperature").then(result => {
-      expect(result).toBeTruthy();
-      expect(result[0].date).toEqual(dateFrom);
-      expect(result[result.length - 1].date).toEqual(dateTo);
-      done();
-    }, done);
   });
 });

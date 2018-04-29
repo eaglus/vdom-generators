@@ -7,7 +7,7 @@ import {
 import { merge } from "../lib/utils/index.js";
 
 const MIN_YEAR = 1881;
-const MAX_YEAR = 2006;
+const MAX_YEAR = 2007;
 
 const initialState = {
   temperature: {
@@ -48,19 +48,23 @@ export function filterReducer(action, state) {
       activeFilterType: action.payload
     });
   } else if (action.type === setActiveFilterFrom.type) {
+    const { maxYear, minYear } = state;
     return updateFilter(filter => {
       const { payload: from } = action;
+      const fromNorm = Math.max(Math.min(from, maxYear - 1), minYear);
       return merge(filter, {
-        from,
-        to: Math.max(from, filter.to)
+        from: fromNorm,
+        to: Math.max(fromNorm + 1, filter.to)
       });
     });
   } else if (action.type === setActiveFilterTo.type) {
+    const { maxYear, minYear } = state;
     return updateFilter(filter => {
       const { payload: to } = action;
+      const toNorm = Math.min(Math.max(to, minYear + 1), maxYear);
       return merge(filter, {
-        to,
-        from: Math.min(to, filter.from)
+        to: toNorm,
+        from: Math.min(toNorm - 1, filter.from)
       });
     });
   } else {

@@ -9,7 +9,6 @@ const pClass = bemClassProps("filter");
 
 export class Filter extends Component {
   render() {
-    console.log(this.props);
     const { from, to, minYear, maxYear } = this.props;
 
     return h("div", pClass("root"), [

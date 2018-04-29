@@ -1,3 +1,4 @@
+import { durationDay } from "../lib/utils/date.js";
 import { createLoader } from "./load/index.js";
 import * as serverApi from "./load/serverApi.js";
 
@@ -42,7 +43,7 @@ function runLoadAction(actionFn) {
       dispatch(dataLoadStart({ version }));
 
       const dateFrom = Date.UTC(from, 0, 1);
-      const dateTo = Date.UTC(to, 0, 1);
+      const dateTo = Date.UTC(to, 0, 1) - durationDay;
       loader(dateFrom, dateTo, activeFilterType)
         .then(data => {
           dispatch(dataLoadSuccess({ version, data }));

@@ -1,20 +1,18 @@
 import { assert } from "../../lib/utils/index.js";
 import {
   FindStartChunk,
+  FindUpperBoundDate,
   FindNextChunk,
   FindClose,
   LoadChunks
 } from "./commands.js";
 
 export function* dataLoader(dateFrom, dateTo, collection, startContext) {
-  let { chunk, context } = yield new FindStartChunk(
-    dateFrom,
-    collection,
-    startContext
-  );
+  const start = yield new FindStartChunk(dateFrom, collection, startContext);
   const data = [];
   let dataEnd = dateFrom - 1;
 
+  let chunk = start.chunk;
   if (chunk && chunk[0].date <= dateFrom) {
     while (chunk && dataEnd < dateTo) {
       for (let i in chunk) {
@@ -29,27 +27,51 @@ export function* dataLoader(dateFrom, dateTo, collection, startContext) {
       }
 
       if (dataEnd < dateTo) {
-        ({ chunk, context } = yield new FindNextChunk(context));
+        ({ chunk } = yield new FindNextChunk(start.context));
       }
     }
   }
-  yield new FindClose(context);
 
   if (dataEnd < dateFrom) {
+    let upperBoundDate;
+
+    if (!chunk) {
+      upperBoundDate = yield new FindUpperBoundDate(
+        dateFrom,
+        collection,
+        start.context
+      );
+    }
+
     const loadTo = chunk ? chunk[0].date - 1 : dateTo;
-    const context = yield new LoadChunks(dateFrom, loadTo, collection);
-    const loadedData = yield* dataLoader(dateFrom, dateTo, collection, context);
+    const loadFrom =
+      upperBoundDate !== undefined ? upperBoundDate + 1 : dateFrom;
+
+    yield new FindClose(start.context);
+    const loadedContext = yield new LoadChunks(loadFrom, loadTo, collection);
+
+    const loadedData = yield* dataLoader(
+      dateFrom,
+      dateTo,
+      collection,
+      loadedContext
+    );
     return loadedData;
   } else if (dataEnd >= dateTo) {
+    yield new FindClose(start.context);
+
     return data;
   } else {
     assert(!chunk);
-    const context = yield new LoadChunks(dataEnd + 1, dateTo, collection);
+
+    yield new FindClose(start.context);
+    const loadedContext = yield new LoadChunks(dataEnd + 1, dateTo, collection);
+
     const finalData = yield* dataLoader(
       dataEnd + 1,
       dateTo,
       collection,
-      context
+      loadedContext
     );
     return data.concat(finalData);
   }

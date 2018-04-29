@@ -1,6 +1,7 @@
 import { dataLoader } from "../loadGenerator";
 import {
   FindStartChunk,
+  FindUpperBoundDate,
   FindNextChunk,
   LoadChunks,
   FindClose
@@ -45,6 +46,7 @@ describe("loader commands test", () => {
   test("test for empty", () => {
     const commandTable = [
       [new FindStartChunk(dateFrom, ""), { context: openedContext }], //no chunks at start
+      [new FindUpperBoundDate(dateFrom, "", openedContext), undefined],
       [new FindClose(openedContext)],
       [new LoadChunks(dateFrom, dateTo, ""), loadedContext],
       [
@@ -99,6 +101,41 @@ describe("loader commands test", () => {
   });
 
   test("test for load right", () => {
+    const startContext = { db: "nothing" };
+    const openedContext = { db: 1 };
+    const loadedContext = { db: 2 };
+    const commandTable = [
+      [new FindStartChunk(50, "", startContext), { context: openedContext }], //no chunks after dateFrom
+      [new FindUpperBoundDate(50, "", openedContext), 49],
+      [new FindClose(openedContext)],
+      [new LoadChunks(50, 207, ""), loadedContext],
+      [
+        new FindStartChunk(50, "", loadedContext),
+        { chunk: makeChunk(50), context: loadedContext }
+      ],
+      [
+        new FindNextChunk(loadedContext),
+        { chunk: makeChunk(50 + chunkLength), context: loadedContext }
+      ],
+      [
+        new FindNextChunk(loadedContext),
+        { chunk: makeChunk(50 + chunkLength * 2), context: loadedContext }
+      ],
+      [
+        new FindNextChunk(loadedContext),
+        { chunk: makeChunk(50 + chunkLength * 3), context: loadedContext }
+      ],
+      [new FindClose(loadedContext)]
+    ];
+
+    testCommands(
+      dataLoader(50, 207, "", startContext),
+      commandTable,
+      makeChunk(50, 4).slice(0, 207 - 50 + 1)
+    );
+  });
+
+  test("test for load right from found", () => {
     const startContext = { db: "nothing" };
     const openedContext = { db: 1 };
     const loadedContext = { db: 2 };

@@ -2,11 +2,15 @@ import {
   FindStartChunk,
   FindNextChunk,
   FindClose,
-  LoadChunks
+  LoadChunks,
+  FindUpperBoundDate
 } from "./commands.js";
-import { assert } from "../../lib/utils/index.js";
+import { assert, last } from "../../lib/utils/index.js";
 import { openIndexedDB } from "../../lib/utils/indexedDB.js";
-import { alignToMonthStartUTC, alignToMonthEndUTC } from "../../lib/utils/date.js";
+import {
+  alignToMonthStartUTC,
+  alignToMonthEndUTC
+} from "../../lib/utils/date.js";
 
 export function splitToMonths(data) {
   const monthsData = [];
@@ -78,6 +82,7 @@ export function createCommandHandler(env) {
           const range = env.IDBKeyRange.lowerBound(alignToMonthStartUTC(date));
           const index = store.index("date");
           const request = index.openCursor(range);
+
           request.onsuccess = event => {
             const cursor = event.target.result;
             const key = cursor && cursor.key;
@@ -86,7 +91,6 @@ export function createCommandHandler(env) {
               chunk: key != null ? value.data : undefined,
               context: {
                 db,
-                cursor,
                 request
               }
             });
@@ -94,19 +98,45 @@ export function createCommandHandler(env) {
           request.onerror = errorCallback;
         })
         .catch(errorCallback);
-    } else if (command instanceof FindNextChunk) {
-      const { context } = command;
-      const { cursor, request } = context;
+    } else if (command instanceof FindUpperBoundDate) {
+      const { context, collection, date } = command;
+      const { db } = context;
+      const tx = db.transaction(collection, "readonly");
+      const store = tx.objectStore(collection);
+      const range = env.IDBKeyRange.upperBound(alignToMonthStartUTC(date));
+      const index = store.index("date");
+      const request = index.openCursor(range, "prev");
 
-      cursor.continue();
-      request.onsuccess = () => {
-        const key = cursor.key;
-        callback({
-          chunk: key != null ? cursor.value.data : undefined,
-          context
-        });
+      request.onsuccess = event => {
+        const cursor = event.target.result;
+        const key = cursor && cursor.key;
+        const value = cursor && cursor.value;
+        const result = key != null ? last(value.data).date : undefined;
+
+        callback(result);
       };
       request.onerror = errorCallback;
+    } else if (command instanceof FindNextChunk) {
+      const { context } = command;
+      const { request } = context;
+      const cursor = request.result;
+
+      if (cursor) {
+        cursor.continue();
+        request.onsuccess = () => {
+          const key = cursor.key;
+          callback({
+            chunk: key != null ? cursor.value.data : undefined,
+            context
+          });
+        };
+        request.onerror = errorCallback;
+      } else {
+        callback({
+          chunk: undefined,
+          context
+        });
+      }
     } else if (command instanceof FindClose) {
       const {
         context: { db }

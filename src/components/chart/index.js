@@ -97,13 +97,14 @@ class ChartComponent extends Component {
       const zoomIndexL = lowerBound(data, { date: xMin }, dateComparer);
       const zoomIndexR = upperBound(data, { date: xMax }, dateComparer);
 
-      this.zoomedData = data.slice(zoomIndexL, zoomIndexR);
+      this.zoomedData = data.slice(zoomIndexL, zoomIndexR + 1);
 
       if (this.zoomedData.length) {
-        let min = Number.POSITIVE_INFINITY;
-        let max = Number.NEGATIVE_INFINITY;
+        const firstValue = this.zoomedData[0].value;
+        let min = firstValue;
+        let max = firstValue;
         let length = this.zoomedData.length;
-        for (let i = 0; i !== length; i++) {
+        for (let i = 1; i !== length; i++) {
           const { value } = this.zoomedData[i];
           if (value < min) {
             min = value;

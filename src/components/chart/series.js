@@ -13,7 +13,7 @@ export function groupDataByWindow({ data, groupSize, groupMapper }) {
   };
 
   let point;
-  for (let i = 1; i !== dataLength; i++) {
+  for (let i = 0; i !== dataLength; i++) {
     point = data[i];
     const { date, value } = point;
 
@@ -32,9 +32,7 @@ export function groupDataByWindow({ data, groupSize, groupMapper }) {
     }
   }
 
-  if (prevPoint !== point) {
-    result.push(groupMapper(currentGroup));
-  }
+  result.push(groupMapper(currentGroup));
 
   return result;
 }
@@ -74,8 +72,10 @@ function pairsConnect(pair1, pair2) {
 
 export function drawSeries(params) {
   const { data, context, dataPointToChartPoint, lineColor } = params;
+  if (data.length < 2) {
+    return;
+  }
 
-  console.time("drawSeries - group");
   const dataGroupSize = groupSizeFromChartToDate(params);
   const groupMapper = valueMinMaxToPoints(dataPointToChartPoint);
   const pairs = groupDataByWindow({
@@ -84,8 +84,6 @@ export function drawSeries(params) {
     groupMapper
   });
 
-  console.timeEnd("drawSeries - group");
-  console.time("drawSeries - draw");
   context.beginPath();
   context.strokeStyle = lineColor;
 
@@ -116,5 +114,4 @@ export function drawSeries(params) {
   });
 
   context.stroke();
-  console.timeEnd("drawSeries - draw");
 }

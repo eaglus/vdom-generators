@@ -262,7 +262,7 @@ function handleAppendClose(command, rootContext) {
   const { isComponent } = vNode;
 
   if (fragment) {
-    console.log("Append fragment", fragment);
+    //console.log("Append fragment", fragment);
     if (insertContext) {
       const { element: prevSibling } = insertContext;
       if (prevSibling === "prepend") {
@@ -310,42 +310,50 @@ function handleAppendClose(command, rootContext) {
 
 function handleCleanup(command, rootContext) {
   const { vNode, element, id } = command.context;
-  const normalizedProps = vNode.normalizedProps(rootContext.env);
-  const { events } = normalizedProps;
-  const { unmount } = events || emptyObject;
-  const { instance } = vNode;
+  const isText = isTextNode(vNode);
+  if (!isText) {
+    const normalizedProps = vNode.normalizedProps(rootContext.env);
+    const { events } = normalizedProps;
+    const { unmount } = events || emptyObject;
+    const { instance } = vNode;
 
-  let queueAction;
-  if (vNode.isComponent) {
-    if (instance) {
-      delete instance.setState;
-      queueAction =
-        instance.componentWillUnmount &&
-        (() => {
-          instance.componentWillUnmount();
-        });
+    let queueAction;
+    if (vNode.isComponent) {
+      if (instance) {
+        delete instance.setState;
+        queueAction =
+          instance.componentWillUnmount &&
+          (() => {
+            instance.componentWillUnmount();
+          });
+      }
+    } else {
+      delete element.rootContext;
+      delete element.virtualEvents;
+      if (unmount) {
+        queueAction = () => unmount(element);
+      }
     }
+
+    if (id) {
+      rootContext = updateContextById(null, id, rootContext);
+    }
+    //console.log("cleanup node", vNode);
+    return {
+      context: command.context,
+      rootContext: updateRootContext(
+        rootContext,
+        null,
+        Object.keys(getDomEvents(events)),
+        queueAction
+      )
+    };
   } else {
-    delete element.rootContext;
-    delete element.virtualEvents;
-    if (unmount) {
-      queueAction = () => unmount(element);
-    }
+    return {
+      context: command.context,
+      rootContext
+    };
   }
-
-  if (id) {
-    rootContext = updateContextById(null, id, rootContext);
-  }
-  console.log("cleanup node", vNode);
-  return {
-    context: command.context,
-    rootContext: updateRootContext(
-      rootContext,
-      null,
-      Object.keys(getDomEvents(events)),
-      queueAction
-    )
-  };
 }
 
 function handleRemove(command, rootContext) {
@@ -354,7 +362,7 @@ function handleRemove(command, rootContext) {
   const prevSibling = firstElement ? firstElement.previousSibling : null;
 
   for (let element of topElements) {
-    console.log("remove subtree at", element);
+    //console.log("remove subtree at", element);
     element.remove();
   }
 
