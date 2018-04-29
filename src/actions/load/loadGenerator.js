@@ -1,4 +1,5 @@
 import { assert } from "../../lib/utils/index.js";
+import { durationDay } from "../../lib/utils/date.js";
 import {
   FindStartChunk,
   FindUpperBoundDate,
@@ -45,7 +46,7 @@ export function* dataLoader(dateFrom, dateTo, collection, startContext) {
 
     const loadTo = chunk ? chunk[0].date - 1 : dateTo;
     const loadFrom =
-      upperBoundDate !== undefined ? upperBoundDate + 1 : dateFrom;
+      upperBoundDate !== undefined ? upperBoundDate + durationDay : dateFrom;
 
     yield new FindClose(start.context);
     const loadedContext = yield new LoadChunks(loadFrom, loadTo, collection);
