@@ -16,8 +16,8 @@ export function combineReducers(reducers) {
   };
 }
 
-export function makeStore(reducer, onUpdate) {
-  let state = reducer(initAction(), undefined);
+export function makeStore(reducer, onUpdate, initialState) {
+  let state = merge(reducer(initAction(), undefined), initialState || {});
   const getState = () => state;
 
   const dispatch = action => {

@@ -107,3 +107,15 @@ export function upperBound(arr, value, compareFn) {
 export function last(data) {
   return data[data.length - 1];
 }
+
+export function debounce(fn, delay) {
+  let timeoutId;
+  return function() {
+    const args = Array.prototype.slice.call(arguments);
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = undefined;
+    }
+    timeoutId = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
