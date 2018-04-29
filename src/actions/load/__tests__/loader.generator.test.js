@@ -7,6 +7,10 @@ import {
   FindClose
 } from "../commands";
 
+jest.mock("../../../lib/utils/date.js", () => ({
+  durationDay: 1 //for fake date ranges used in "loader commands test" suite
+}));
+
 function testCommands(commands, commandsTable, checkResult) {
   let idx = 0;
   let next = commands.next();
