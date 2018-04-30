@@ -28,8 +28,13 @@ export const dataLoadSuccess = actionCreator("DATA_LOAD_SUCCESS");
 export const dataLoadFail = actionCreator("DATA_LOAD_FAIL");
 
 function runLoadAction(actionFn) {
+  let cancelToken;
   return payload => {
     return (dispatch, getState) => {
+      if (cancelToken) {
+        cancelToken.cancel();
+      }
+
       const action = actionFn(payload);
       if (action) {
         dispatch(action);
@@ -44,13 +49,22 @@ function runLoadAction(actionFn) {
 
       const dateFrom = Date.UTC(from, 0, 1);
       const dateTo = Date.UTC(to, 0, 1) - durationDay;
-      loader(dateFrom, dateTo, activeFilterType)
+
+      const res = loader(dateFrom, dateTo, activeFilterType);
+      cancelToken = res.cancelToken;
+
+      return res.result
         .then(data => {
           dispatch(dataLoadSuccess({ version, data }));
         })
         .catch(error => {
-          console.error(error);
-          dispatch(dataLoadFail({ version, error: error.message }));
+          if (res.cancelToken.isCanceled()) {
+            console.log("Request canceled: ", dateFrom, dateTo);
+            dispatch(dataLoadFail({ version, error: "canceled" }));
+          } else {
+            console.error(error);
+            dispatch(dataLoadFail({ version, error: error.message }));
+          }
         });
     };
   };

@@ -1,4 +1,4 @@
-import { runPromisedGenerator, runCallbackGenerator } from "../generator.js";
+import { runCallbackGenerator } from "../generator.js";
 
 describe("generator", () => {
   function* generatorSample(start) {
@@ -10,20 +10,6 @@ describe("generator", () => {
   }
 
   const promiseIds = [3, 4];
-
-  test("runPromisedGenerator", done => {
-    const handler = command => {
-      return promiseIds.includes(command.id)
-        ? new Promise(resolve => setTimeout(resolve(command.id), 10))
-        : command.id;
-    };
-
-    const result = runPromisedGenerator(generatorSample(), handler, null);
-    result.then(v => {
-      expect(v).toBe(5);
-      done();
-    });
-  });
 
   test("runCallbackGenerator", done => {
     const handler = (command, callback) => {

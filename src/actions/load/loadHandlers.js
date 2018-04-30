@@ -69,7 +69,7 @@ export function createCommandHandler(env) {
     });
   };
 
-  return (command, callback, errorCallback) => {
+  return (command, callback, errorCallback, cancelToken) => {
     if (command instanceof FindStartChunk) {
       const { context, collection, date } = command;
       const dbPromise =
@@ -148,7 +148,8 @@ export function createCommandHandler(env) {
       const dataPromise = env.serverApi.loadRange(
         alignToMonthStartUTC(dateFrom),
         alignToMonthEndUTC(dateTo),
-        collection
+        collection,
+        cancelToken
       );
       return dataPromise.then(data => {
         return getDbPromise().then(db => {

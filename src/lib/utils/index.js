@@ -119,3 +119,5 @@ export function debounce(fn, delay) {
     timeoutId = setTimeout(() => fn.apply(this, args), delay);
   };
 }
+
+export class CanceledException {}
