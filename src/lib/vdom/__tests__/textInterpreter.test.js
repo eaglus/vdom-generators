@@ -2,7 +2,7 @@ import { buildText, getTextEnv } from "../interpreters/textInterpreter.js";
 import { h } from "../h.js";
 import { Component } from "../component.js";
 
-function getTestDom(env) {
+function getTestDom() {
   function Comp1(props) {
     return h("div", [h("span", props.label), h("span", props.value)]);
   }
@@ -48,8 +48,7 @@ function getTestDom(env) {
 
   return {
     dom: h(Root, { color: "green", comp2Descr: "Comps4", markupId: 1 }),
-    text:
-`<span style="background-color: green;">
+    text: `<span style="background-color: green;">
   text 1
 </span>
 <div>
