@@ -24,7 +24,7 @@ function normalizeRendered(rendered) {
     throw new Error("Bad render value");
   }
 }
-function* append(newVNode, parentContext, isAppendRoot, insertContext) {
+function* append(newVNode, parentContext, isAppendRoot: boolean, insertContext) {
   if (newVNode.isComponent) {
     return yield* appendComponent(
       newVNode,
@@ -69,7 +69,7 @@ function* append(newVNode, parentContext, isAppendRoot, insertContext) {
 function* appendComponent(
   newVNode,
   parentContext,
-  isAppendRoot,
+  isAppendRoot: boolean,
   insertContext
 ) {
   let markup;

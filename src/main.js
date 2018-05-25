@@ -1,3 +1,5 @@
+// @flow
+
 import { h } from "./lib/vdom/h.js";
 import { debounce, omit } from "./lib/utils/index.js";
 import { makeStore, combineReducers } from "./lib/store/store.js";

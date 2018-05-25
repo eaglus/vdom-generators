@@ -1,5 +1,5 @@
 export class Append {
-  constructor(newVNode, parentContext, isRoot, isAppendRoot, insertContext) {
+  constructor(newVNode, parentContext, isRoot: boolean, isAppendRoot: boolean, insertContext) {
     this.parentContext = parentContext;
     this.newVNode = newVNode;
     this.insertContext = insertContext;
@@ -8,7 +8,7 @@ export class Append {
 }
 
 export class AppendComponent {
-  constructor(newVNode, instance, parentContext, isAppendRoot, insertContext) {
+  constructor(newVNode, instance, parentContext, isAppendRoot: boolean, insertContext) {
     this.newVNode = newVNode;
     this.instance = instance;
     this.parentContext = parentContext;
