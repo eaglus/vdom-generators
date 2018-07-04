@@ -40,3 +40,8 @@ function main() {
 }
 
 main();
+
+const moduleAny: any = module;
+if (moduleAny.hot) {
+  moduleAny.hot.dispose(() => window.location.reload());
+}
