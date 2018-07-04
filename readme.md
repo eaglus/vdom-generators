@@ -1,0 +1,79 @@
+List of browsers on which the application should work: https://caniuse.com/#search=generators
+It works on FF60, latest Chrome, Edge 16, and later.
+
+How to start the application: from the root directory run **yarn start**, and then go to http://localhost:5000/
+The database with the loaded data lies in indexedDB under the name meteodb, there are two tables. In each table data are grouped by months.
+
+Jest framework is used for test.
+Tests can be run by installing the jest and packages for it via **yarn install**, and then running the jest from the root of the application - **yarn jest**
+
+Comments on the application:
+
+I wanted to show the advantages of the declarative approach in constructing the interface (as in the react.js), and i made a mini react-like engine.
+Also I made a small redux-like state management library.
+
+Everything starts with the module **main.js** - there is a store with the producers that handle the actions sent by the interface.
+The makeStore function takes the initial state of the application (without the graph data - they are in indexDB), the combined editor, and the function for updating the interface (onUpdate).
+This function builds the root node (virtual dom), passing it data from the stack, and calls the updater function, which "unfolds" the components in the layout, and updates the corresponding dom in the browser.
+
+The root component can be found in the components / app directory.
+A component can be either a function that builds vdom from properties, or a class. A class can have its own state, which can be initialized in the constructor, and can be changed by calling the setState method.
+setState works in the same way as in a test, and updates only this component, and its child components, and layout.
+
+In the App component, you can also see the bemClassProps function - it makes long class names in the spirit of the bem method (bem is a component, an "element" is a vdom node in the component, and a "modifier" is a string indicating the state of the component) .
+Classes in css have to write with their hands, and they turn out to be long. this task is not a big problem, but in real code you can use preprocessors, css-modules, css-in-js, or something else.
+
+The layout is built using the function h (hyperscript), which takes the tag as the first argument, if it is a simple node, or a class, or a component function, and the other arguments pass the properties and child nodes.
+
+The event handler in the component is specified through properties with the prefix "on" (see the ActiveFilterSelector component).
+The handler can call the setState method by changing the internal state of the component.
+It can return a simple "action" object (action in terms of a revision), which will be executed on the reds, after which the entire interface will be rebuilt (with updating / adding / removing only the changed nodes).
+If the processor does not return anything, then no action will be performed either.
+If it returns a function as an action, it will be launched as thunk in the editor (https://github.com/gaearon/redux-thunk). In this way, the handler can return an action that works with an external environment, loads something, and issues simple actions to the rerender.
+
+Thus, the components are almost "clean", they themselves do not climb anywhere in the handlers, and it is convenient to test them, simply by building the layout by properties, and checking the action objects that the handlers return.
+This picture is spoiled by the setState method, which can be called from the handlers, and it could also be made a special action, but I do not have enough time for this.
+
+With the setState method, the YearSelector calendar component is active - there the first year displayed in the calendar is stored and the indication of whether to show the calendar - it is displayed by clicking on the current year.
+In the YearSelector component, you can also see the life-cycle methods of the component-also as in the response: componentDidUpdate, componentWillUnmount, and the constructor. You can close the calendar by clicking the "Escape" button, selecting the year, or by clicking outside.
+The calendar has two - to start the range and to end, they are in the parent component of the Filter.
+They call the loadForFilterFrom and loadForFilterTo actions, respectively, these actions are handled by the reducer / filters.js, where the selected range is validated, and then the selected range is downloaded (see the actions / index.js module).
+Thanks to the vdom-engine, this component turned out to be simple. Independently updating its contents, child components, and event handlers would be pretty hard .
+
+Another method from the reactor is the high-order component to provideSize in the module lib / utils / component.js. It monitors window size changes, recalculates the size of the "wrapped" component, and updates the properties of that component.
+In this way, you calculate the dimensions for the canvas from the Chart component from the chart.js module (ChartComponent takes sizes from provideSize, and the "top" component is exported with the name Chart).
+Also, the component engine supports the shouldComponentUpdate method, which allows you not to update the component, and its entire hierarchy, if some important properties have not changed (as in the reaction).
+This method is implemented in the chart component (chart.js).
+The graph is updated to call the componentDidUpdate method, which is called after the engine has updated the component's layout (if shouldComponentUpdate returned true). For a graph, it updates only the canvas element, draws the graph on it.
+
+About the schedule:
+
+* the range of the graph along the X axis can be changed by selecting in the range selection above the graph, then the required data piece is loaded with an accuracy of up to a year.
+* downloaded data can be scaled along the X axis, rotating the mouse wheel, and the point above which the cursor is positioned is not shifted - so it is more convenient to scale the desired area.
+* You can also move the scaled bar graph to the right or to the left. The scale along the Y axis when scaling and shifting along the X axis also varies according to the selected range.
+* the graph is rebuilt when the window is resized
+
+* because it is not clear to which time zone data in the test files (temperature.json and precipitation.json belong), I believe that the time is there in UTC.
+  And on the X axis, I draw date / time marks in the current time zone, so the labels on the graph (they are drawn for rounded values ​​of local time) for Cyprus time are offset relative to the points of the graph for 3 hours ahead - the point on the graph stands at 0 hours of some day, but you can not draw a label there, because for local time the point will be unrounded - 21:00 of the previous day).
+  Therefore, the label on the X axis is drawn to start the day according to local time, and not UTC, and is shifted to the right 3 hours from the near point of the graph.
+  Of course, it was possible to put timestamps for UTC too, but I think that it is more correct, after all, for local time, so it is more convenient to see when that happened, and you do not need to calculate the bias yourself.
+
+The data in the graph is loaded from the stack, in the stack they come from indexedDB, and there from the network (this is done by the loader from the actions / load / index.js module).
+If a large range is selected, there are several data points per point in the graph, and it is unclear how to show ...
+Averaging is not good, because the spread is too big ... I draw a strip at this point, with the top being the maximum of the indicator at this point in the graph, and the bottom is the minimum.
+So the strips are obtained no more than the points on the graph, it is drawn quickly, and with increasing scale the shape of the graph does not change much.
+Some vorkers for calculating the schedule, I did not do it - it works so fast.
+
+Still want to comment on the approach with which the component engine is made - the main algorithm is made on generators (lib / vdom / diff.js).
+The generator itself does not change anything in the browser - it produces the commands that the interpreter executes (there are two interpreters - documentInterpreter.js and textInterpreter.js).
+The first executes all the commands issued by the generator, and updates the dom, manages the events (they all sit on the top node of the mount, one handler for each type of event).
+The second executes only the commands that create the node, and produces text that can be given from the server, for example. There is a test for it (textInterpeter.test.js).
+Also, this separation allows (if you develop an idea) the interpreter to delay the execution of the next command until the animation, which the current command has started, ends, for example, so the animation will be smoother ...
+Or in the next iteration of the update, wait for the animation to end from the commands from the previous iteration ...
+You can also make another interpreter - for tests, which will build a tree in json format - and on it you can test "snapshots" of components, as it is done in the library of enzyme.
+Well and it is possible to make the primitive interpreter - specially for testing of the basic algorithm.
+
+I did not do such tests, but this approach was done in loading data (actions / load / loadGenerator.js), and there the load algorithm also gives commands, and it has tests, and there are tests for the module executing the commands (loadHandlers. js).
+It is also convenient to cancel the process through the generator - in my function, which executes the generator's commands, a "cancel token" is sent, which can stop the execution of the generator's commands. I cancel the current download when I start a new one - this can be tested if you select a small range, delete the indexedDB.deleteDatabase ('meteodb') database, then enable Chrome on a slow Internet simulation and quickly switch ranges. In the network you can see canceled requests, and in the console - messages about cancellation.
+
+Also on the simulation of slow internet you can see that while the download of a new range is in progress, the graph shows the old one and it can be moved and scaled until new data is loaded.

@@ -20,14 +20,14 @@ export function ActiveFilterSelector(props) {
       merge(pClass("button", temperatureButtonMod), {
         onClick: () => loadForFilterType(ACTIVE_FILTER.TEMPERATURE)
       }),
-      "Температура"
+      "Temperature"
     ),
     h(
       "div",
       merge(pClass("button", precipitationButtonMod), {
         onClick: () => loadForFilterType(ACTIVE_FILTER.PRECIPITATION)
       }),
-      "Осадки"
+      "Precipitation"
     )
   ]);
 }

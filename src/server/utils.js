@@ -1,5 +1,5 @@
-const TemperatureData = require("../../temperature.json");
-const PrecipitationData = require("../../precipitation.json");
+const TemperatureData = require("../../data/temperature.json");
+const PrecipitationData = require("../../data/precipitation.json");
 
 const temperature = convertData(TemperatureData);
 const precipitation = convertData(PrecipitationData);

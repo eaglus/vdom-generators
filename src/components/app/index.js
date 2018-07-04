@@ -16,7 +16,7 @@ export class App extends Component {
       "div",
       pClass("root"),
       h("div", pClass("center-container"), [
-        h("div", pClass("header"), "Архив метеослужбы"),
+        h("div", pClass("header"), "Meteo data archive"),
         h("div", pClass("content"), [
           h("div", pClass("content-left"), h(ActiveFilterSelector, filter)),
           h(
