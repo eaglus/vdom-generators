@@ -65,14 +65,12 @@ So, candles are obtained no more than the points on the graph, it is drawn quick
 
 Also, i want to comment on the approach with which the component engine is made - the main algorithm is made on generators (lib / vdom / diff.js).
 The generator itself does not change anything in the browser - it produces the commands that the interpreter executes (there are two interpreters - documentInterpreter.js and textInterpreter.js).
-The first executes all the commands issued by the generator, and updates the dom, manages the events (they all sit on the top node of the mount, one handler for each type of event).
+The first executes all the commands issued by the generator, and updates the dom, manages the events (they all are on the top node of the mount, one handler for each type of event).
 The second executes only the commands that create the node, and produces text that can be given from the server, for example. There is a test for it (textInterpeter.test.js).
-Also, this separation allows (if you develop an idea) the interpreter to delay the execution of the next command until the animation, which the current command has started, ends, for example, so the animation will be smoother ...
-Or in the next iteration of the update, wait for the animation to end from the commands from the previous iteration ...
-You can also make another interpreter - for tests, which will build a tree in json format - and on it you can test "snapshots" of components, as it is done in the library of enzyme.
-Well and it is possible to make the primitive interpreter - specially for testing of the basic algorithm.
+Also, this separation allows (in future) the interpreter to make animations more smooth, delaing execution of the current command until current animation ends.
+We can also make another interpreter - for tests, which will build a tree in json format - and on it you can test "snapshots" of components, as it is done in enzyme library.
 
-I did not do such tests, but this approach was done in loading data (actions / load / loadGenerator.js), and there the load algorithm also gives commands, and it has tests, and there are tests for the module executing the commands (loadHandlers. js).
-It is also convenient to cancel the process through the generator - in my function, which executes the generator's commands, a "cancel token" is sent, which can stop the execution of the generator's commands. I cancel the current download when I start a new one - this can be tested if you select a small range, delete the indexedDB.deleteDatabase ('meteodb') database, then enable Chrome on a slow Internet simulation and quickly switch ranges. In the network you can see canceled requests, and in the console - messages about cancellation.
+Also, generator/command approach was done in loading data (actions / load / loadGenerator.js), and there the load algorithm also gives commands, and it has tests, and there are tests for the module executing the commands (loadHandlers. js).
+It is also convenient to cancel the process through the generator - in my function, which executes the generator's commands, a "cancel token" is sent, which can stop the execution of the generator's commands. 
 
-Also on the simulation of slow internet you can see that while the download of a new range is in progress, the graph shows the old one and it can be moved and scaled until new data is loaded.
+Also on the simulation of slow internet you can see that while the download of a new range is in progress, the chart shows the old one and it can be moved and scaled until new data is loaded.
