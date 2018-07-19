@@ -41,15 +41,17 @@ The calendar has two YearSelector - for start and end of range, they are in the 
 They call the loadForFilterFrom and loadForFilterTo actions, respectively, these actions are handled by the reducer / filters.js, where the selected range is validated, and then the selected range is downloaded (see the actions / index.js module).
 Thanks to the vdom-engine, this component turned out to be simple. Independently updating its contents, child components, and event handlers would be pretty hard .
 
-Another method from the reactor is the high-order component to provideSize in the module lib / utils / component.js. It monitors window size changes, recalculates the size of the "wrapped" component, and updates the properties of that component.
-In this way, you calculate the dimensions for the canvas from the Chart component from the chart.js module (ChartComponent takes sizes from provideSize, and the "top" component is exported with the name Chart).
-Also, the component engine supports the shouldComponentUpdate method, which allows you not to update the component, and its entire hierarchy, if some important properties have not changed (as in the reaction).
+Another approach adopted from react.js is the high-order component (HOC).
+This is provideSize HOC in the module lib / utils / component.js. It monitors window size changes, recalculates the size of the "wrapped" component, and updates the properties of that component.
+This way, we calculate dimensions for canvas of Chart component from the chart.js module (ChartComponent takes sizes from provideSize, and the "top" component is exported with the name Chart).
+Also, the component engine supports shouldComponentUpdate method, which prevents update the component, and its entire hierarchy, if some important properties have not changed (as react.js does).
 This method is implemented in the chart component (chart.js).
-The graph is updated to call the componentDidUpdate method, which is called after the engine has updated the component's layout (if shouldComponentUpdate returned true). For a graph, it updates only the canvas element, draws the graph on it.
+The chart is updated to call the componentDidUpdate method, which is called after the engine has updated the component's layout (if shouldComponentUpdate returned true). 
+For chart, it updates only the canvas element, draws the data series/axis on it.
 
 About chart:
 
-* the range of the graph along the X axis can be changed by selecting in the range selection above the graph, then the required data piece is loaded with an accuracy of up to a year.
+* the range of the chart along the X axis can be changed by selecting in the range selection above the graph, then the required data piece is loaded with an accuracy of up to a year.
 * downloaded data can be scaled along the X axis, rotating the mouse wheel, and the point above which the cursor is positioned is not shifted - so it is more convenient to scale the desired area.
 * You can also move the scaled bar graph to the right or to the left. The scale along the Y axis when scaling and shifting along the X axis also varies according to the selected range.
 * the graph is rebuilt when the window is resized
