@@ -51,21 +51,17 @@ For chart, it updates only the canvas element, draws the data series/axis on it.
 
 About chart:
 
-* the range of the chart along the X axis can be changed by selecting in the range selection above the graph, then the required data piece is loaded with an accuracy of up to a year.
+* the range of the chart along the X axis can be changed by selecting in the range selection above the chart, then the required data piece is loaded.
 * downloaded data can be scaled along the X axis, rotating the mouse wheel, and the point above which the cursor is positioned is not shifted - so it is more convenient to scale the desired area.
-* You can also move the scaled bar graph to the right or to the left. The scale along the Y axis when scaling and shifting along the X axis also varies according to the selected range.
-* the graph is rebuilt when the window is resized
+* You can also drag scaled chart to the right or to the left. The scale along the Y axis when scaling and shifting along the X axis also varies according to the selected range.
+* the chart is recalculated when the window is resized
 
 * because it is not clear to which time zone data in the test files (temperature.json and precipitation.json belong), I believe that the time is there in UTC.
-  And on the X axis, I draw date / time marks in the current time zone, so the labels on the graph (they are drawn for rounded values ​​of local time) for Cyprus time are offset relative to the points of the graph for 3 hours ahead - the point on the graph stands at 0 hours of some day, but you can not draw a label there, because for local time the point will be unrounded - 21:00 of the previous day).
-  Therefore, the label on the X axis is drawn to start the day according to local time, and not UTC, and is shifted to the right 3 hours from the near point of the graph.
-  Of course, it was possible to put timestamps for UTC too, but I think that it is more correct, after all, for local time, so it is more convenient to see when that happened, and you do not need to calculate the bias yourself.
 
-The data in the graph is loaded from the stack, in the stack they come from indexedDB, and there from the network (this is done by the loader from the actions / load / index.js module).
+The data in the chart is loaded from the store, in the store they come from indexedDB, and there from the network (this is done by the loader from the actions / load / index.js module).
 If a large range is selected, there are several data points per point in the graph, and it is unclear how to show ...
-Averaging is not good, because the spread is too big ... I draw a strip at this point, with the top being the maximum of the indicator at this point in the graph, and the bottom is the minimum.
-So the strips are obtained no more than the points on the graph, it is drawn quickly, and with increasing scale the shape of the graph does not change much.
-Some vorkers for calculating the schedule, I did not do it - it works so fast.
+Averaging is not good, because the spread is too big ... I draw a 'candle' at this point, with the top being the maximum of the indicator at this point in the chart, and the bottom is the minimum.
+So, candles are obtained no more than the points on the graph, it is drawn quickly, and with increasing scale the shape of the chart does not change much.
 
 Also, i want to comment on the approach with which the component engine is made - the main algorithm is made on generators (lib / vdom / diff.js).
 The generator itself does not change anything in the browser - it produces the commands that the interpreter executes (there are two interpreters - documentInterpreter.js and textInterpreter.js).
